@@ -20,9 +20,11 @@ import java.time.Duration;
 /**
  * Envía los códigos de verificación al Gmail del usuario.
  *
- * Dos formas (application.properties):
- *  - BREVO_API_KEY definida: API HTTPS de Brevo (sirve en Render gratis, que bloquea SMTP).
- *  - Si no: Gmail por SMTP (spring.mail.*, variables MAIL_USERNAME y MAIL_PASSWORD).
+ * Tres formas, en este orden (application.properties):
+ *  1. MAIL_RELAY_URL definida: Google Apps Script que envía desde tu Gmail por HTTPS
+ *     (sirve en Render gratis, que bloquea SMTP). Ver GUIA_DESPLIEGUE.md.
+ *  2. BREVO_API_KEY definida: API HTTPS de Brevo.
+ *  3. Si no: Gmail por SMTP (spring.mail.*, variables MAIL_USERNAME y MAIL_PASSWORD).
  * El código solo se envía al correo: no se muestra en pantalla.
  */
 @Service
@@ -33,18 +35,30 @@ public class CorreoService {
     private final ObjectProvider<JavaMailSender> mailSender;
     private final String remitente;
     private final String brevoApiKey;
-    private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
+    private final String relayUrl;
+    private final String relaySecreto;
+    // Apps Script responde con una redirección (302): se sigue automáticamente.
+    private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10))
+            .followRedirects(HttpClient.Redirect.NORMAL).build();
 
     public CorreoService(ObjectProvider<JavaMailSender> mailSender,
                          @Value("${app.correo.remitente:${spring.mail.username:}}") String remitente,
-                         @Value("${app.correo.brevo-api-key:}") String brevoApiKey) {
+                         @Value("${app.correo.brevo-api-key:}") String brevoApiKey,
+                         @Value("${app.correo.relay-url:}") String relayUrl,
+                         @Value("${app.correo.relay-secreto:}") String relaySecreto) {
         this.mailSender = mailSender;
         this.remitente = remitente;
         this.brevoApiKey = brevoApiKey == null ? "" : brevoApiKey.trim();
+        this.relayUrl = relayUrl == null ? "" : relayUrl.trim();
+        this.relaySecreto = relaySecreto == null ? "" : relaySecreto.trim();
     }
 
     /** Envía el código al Gmail. El código nunca se muestra en pantalla ni en la consola. */
     public void enviarCodigo(String para, String nombre, String codigo, String motivo, int minutosValidez) {
+        if (!relayUrl.isEmpty()) {
+            enviarPorAppsScript(para, "Tu código de verificación: " + codigo, html(nombre, codigo, motivo, minutosValidez));
+            return;
+        }
         if (!brevoApiKey.isEmpty()) {
             enviarPorBrevo(para, nombre, "Tu código de verificación: " + codigo, html(nombre, codigo, motivo, minutosValidez));
             return;
@@ -63,6 +77,33 @@ public class CorreoService {
             sender.send(mensaje);
         } catch (Exception e) {
             log.error("No se pudo enviar el correo a {}: {}", para, e.getMessage());
+            throw new DatosInvalidosException("No se pudo enviar el correo. Revisa el Gmail o intenta más tarde.");
+        }
+    }
+
+    /** Envío desde el Gmail del colegio con un Google Apps Script publicado como aplicación web. */
+    private void enviarPorAppsScript(String para, String asunto, String html) {
+        String json = "{\"secreto\":" + jsonTexto(relaySecreto) + ",\"para\":" + jsonTexto(para)
+                + ",\"asunto\":" + jsonTexto(asunto) + ",\"html\":" + jsonTexto(html)
+                + ",\"nombre\":\"I.E. 2092 Cristo Morado\"}";
+        try {
+            HttpRequest req = HttpRequest.newBuilder(URI.create(relayUrl))
+                    .timeout(Duration.ofSeconds(30))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
+                    .build();
+            HttpResponse<String> res = http.send(req, HttpResponse.BodyHandlers.ofString());
+            String body = res.body() == null ? "" : res.body();
+            if (res.statusCode() / 100 != 2 || !body.replace(" ", "").contains("\"ok\":true")) {
+                log.error("Apps Script respondió {} al enviar a {}: {}", res.statusCode(), para,
+                        body.length() > 300 ? body.substring(0, 300) : body);
+                throw new DatosInvalidosException("No se pudo enviar el correo. Revisa el Gmail o intenta más tarde.");
+            }
+        } catch (DatosInvalidosException e) {
+            throw e;
+        } catch (Exception e) {
+            if (e instanceof InterruptedException) Thread.currentThread().interrupt();
+            log.error("No se pudo enviar el correo a {} por Apps Script: {}", para, e.getMessage());
             throw new DatosInvalidosException("No se pudo enviar el correo. Revisa el Gmail o intenta más tarde.");
         }
     }
