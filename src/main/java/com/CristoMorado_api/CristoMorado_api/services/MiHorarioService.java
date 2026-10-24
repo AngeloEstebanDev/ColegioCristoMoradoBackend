@@ -75,7 +75,7 @@ public class MiHorarioService {
         int hoy = LocalDate.now().getDayOfWeek().getValue();
         long clasesHoy = bloques.stream().filter(b -> b.dia() == hoy).count();
         return new MiHorarioDto.Docente(nombre, cursos.size(), secciones.size(), clasesHoy,
-                min == null ? "07:45" : min.toString(), max == null ? "14:00" : max.toString(), bloques);
+                min == null ? "07:30" : min.toString(), max == null ? "13:15" : max.toString(), bloques);
     }
 
     @Transactional(readOnly = true)

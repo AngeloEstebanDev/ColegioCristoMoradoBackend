@@ -546,9 +546,10 @@ public class NotaService {
         return todos.isEmpty() ? null : todos.get(0);
     }
 
+    /** Periodo activo = el que contiene la fecha de hoy; null entre bimestres o en vacaciones. */
     public Periodo periodoActivo() {
-        List<Periodo> activos = periodoRepository.findByActivoTrue();
-        return activos.isEmpty() ? null : activos.get(0);
+        LocalDate hoy = LocalDate.now();
+        return periodoRepository.findAll().stream().filter(p -> p.vigenteEn(hoy)).findFirst().orElse(null);
     }
 
     /** Notas registradas de las evaluaciones indicadas (para los reportes). */
@@ -565,7 +566,7 @@ public class NotaService {
     }
 
     public static NotaDto.PeriodoCorto corto(Periodo p) {
-        return new NotaDto.PeriodoCorto(p.getId(), p.getNombre(), p.getAnio(), p.getBimestre(), Boolean.TRUE.equals(p.getActivo()));
+        return new NotaDto.PeriodoCorto(p.getId(), p.getNombre(), p.getAnio(), p.getBimestre(), p.vigenteEn(LocalDate.now()));
     }
 
     // ------------------------------------------------------------------

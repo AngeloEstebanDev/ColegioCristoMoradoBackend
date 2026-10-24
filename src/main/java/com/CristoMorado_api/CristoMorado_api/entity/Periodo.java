@@ -6,7 +6,10 @@ import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-/** Periodo académico (bimestre) del año escolar. Solo uno puede estar activo. */
+/**
+ * Periodo académico (bimestre) del año escolar.
+ * Está activo solo mientras la fecha de hoy está dentro de su rango (fecha inicio y fin incluidas).
+ */
 @Entity
 @Table(name = "periodos", uniqueConstraints = @UniqueConstraint(columnNames = {"anio", "bimestre"}))
 @Getter
@@ -36,6 +39,7 @@ public class Periodo {
     @Column(name = "fecha_fin", nullable = false)
     private LocalDate fechaFin;
 
+    /** Copia guardada de vigenteEn(hoy); se actualiza sola (PeriodoService.sincronizarActivo). */
     @Column(nullable = false)
     @Builder.Default
     private Boolean activo = false;
@@ -43,4 +47,10 @@ public class Periodo {
     @Column(name = "fecha_registro", nullable = false)
     @Builder.Default
     private LocalDateTime fechaRegistro = LocalDateTime.now();
+
+    /** true si la fecha está dentro del rango del periodo (inicio y fin incluidos). */
+    public boolean vigenteEn(LocalDate fecha) {
+        return fecha != null && fechaInicio != null && fechaFin != null
+                && !fecha.isBefore(fechaInicio) && !fecha.isAfter(fechaFin);
+    }
 }

@@ -1,5 +1,6 @@
 package com.CristoMorado_api.CristoMorado_api.services;
 
+import com.CristoMorado_api.CristoMorado_api.util.Soporte;
 import com.CristoMorado_api.CristoMorado_api.exception.DatosInvalidosException;
 import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
@@ -65,7 +66,7 @@ public class CorreoService {
         }
         JavaMailSender sender = mailSender.getIfAvailable();
         if (sender == null || remitente == null || remitente.isBlank()) {
-            throw new DatosInvalidosException("El envío de correos no está configurado. Avisa al administrador.");
+            throw new DatosInvalidosException("El envío de correos no está configurado. Por favor, " + Soporte.ESCRIBE_A_SOPORTE + ".");
         }
         try {
             MimeMessage mensaje = sender.createMimeMessage();
@@ -111,7 +112,7 @@ public class CorreoService {
     /** Envío por la API HTTPS de Brevo (https://developers.brevo.com/reference/sendtransacemail). */
     private void enviarPorBrevo(String para, String nombre, String asunto, String html) {
         if (remitente == null || remitente.isBlank()) {
-            throw new DatosInvalidosException("El envío de correos no está configurado. Avisa al administrador.");
+            throw new DatosInvalidosException("El envío de correos no está configurado. Por favor, " + Soporte.ESCRIBE_A_SOPORTE + ".");
         }
         String json = "{\"sender\":{\"name\":\"I.E. 2092 Cristo Morado\",\"email\":" + jsonTexto(remitente) + "},"
                 + "\"to\":[{\"email\":" + jsonTexto(para) + ",\"name\":" + jsonTexto(nombre == null || nombre.isBlank() ? para : nombre) + "}],"

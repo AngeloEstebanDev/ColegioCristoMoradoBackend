@@ -1,5 +1,6 @@
 package com.CristoMorado_api.CristoMorado_api.services;
 
+import com.CristoMorado_api.CristoMorado_api.util.Soporte;
 import com.CristoMorado_api.CristoMorado_api.dto.CodigoEnviadoResponse;
 import com.CristoMorado_api.CristoMorado_api.entity.CodigoVerificacion;
 import com.CristoMorado_api.CristoMorado_api.entity.Usuario;
@@ -110,10 +111,10 @@ public class VerificacionService {
     public CodigoEnviadoResponse solicitarRecuperacion(String nombreUsuario) {
         Usuario u = buscarPorNombreUsuario(nombreUsuario);
         if (Boolean.FALSE.equals(u.getEstado())) {
-            throw new DatosInvalidosException("Tu cuenta está inactiva. Contacta al administrador.");
+            throw new DatosInvalidosException("Tu cuenta está inactiva. Para activarla, " + Soporte.ESCRIBE_A_SOPORTE + ".");
         }
-        exigirGmailVerificado(u, "Tu cuenta no tiene un Gmail verificado. Pide al administrador que "
-                + "restablezca tu contraseña y luego vincula tu Gmail en \"Mi perfil\".");
+        exigirGmailVerificado(u, "Tu cuenta no tiene un Gmail verificado. Para restablecer tu contraseña, "
+                + Soporte.ESCRIBE_A_SOPORTE + ". Luego vincula tu Gmail en \"Mi perfil\".");
         return generarYEnviar(u, CodigoVerificacion.RECUPERAR_PASSWORD, u.getCorreo(), "restablecer tu contraseña");
     }
 

@@ -9,13 +9,15 @@ import com.CristoMorado_api.CristoMorado_api.repository.PeriodoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
 
 /**
  * Académico > Periodos: bimestres del año escolar.
- * Un bimestre por año (1 a 4), sin cruces de fechas, y solo un periodo activo.
+ * Un bimestre por año (1 a 4), sin cruces de fechas. El periodo activo NO se elige a mano:
+ * es el que contiene la fecha de hoy (entre bimestres no hay periodo activo).
  */
 @Service
 public class PeriodoService {
@@ -30,8 +32,9 @@ public class PeriodoService {
     }
 
     /** Del más reciente al más antiguo; dentro del año, del I al IV bimestre. */
-    @Transactional(readOnly = true)
+    @Transactional
     public List<PeriodoDto.Response> listar() {
+        sincronizarActivo();
         return periodoRepository.findAll().stream()
                 .sorted(Comparator.comparing(Periodo::getAnio).reversed().thenComparing(Periodo::getBimestre))
                 .map(PeriodoDto.Response::fromEntity)
@@ -42,6 +45,7 @@ public class PeriodoService {
     public PeriodoDto.Response crear(PeriodoDto.Request req) {
         Periodo p = Periodo.builder().build();
         aplicar(p, req, null);
+        p.setActivo(p.vigenteEn(LocalDate.now()));
         return PeriodoDto.Response.fromEntity(periodoRepository.save(p));
     }
 
@@ -51,6 +55,7 @@ public class PeriodoService {
         Periodo p = periodoRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Periodo no encontrado."));
         aplicar(p, req, p.getId());
+        p.setActivo(p.vigenteEn(LocalDate.now()));
         return PeriodoDto.Response.fromEntity(periodoRepository.save(p));
     }
 
@@ -89,19 +94,19 @@ public class PeriodoService {
         p.setFechaFin(req.fechaFin());
     }
 
-    /** Activa este periodo y desactiva el que estuviera activo (solo uno a la vez). */
+    /**
+     * Guarda en la columna "activo" si cada periodo contiene la fecha de hoy
+     * (para que la base de datos muestre lo mismo que el sistema).
+     */
     @Transactional
-    public PeriodoDto.Response activar(Long id) {
-        Periodo p = periodoRepository.findById(id)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Periodo no encontrado."));
-        for (Periodo otro : periodoRepository.findByActivoTrue()) {
-            if (!otro.getId().equals(p.getId())) {
-                otro.setActivo(false);
-                periodoRepository.save(otro);
+    public void sincronizarActivo() {
+        LocalDate hoy = LocalDate.now();
+        for (Periodo p : periodoRepository.findAll()) {
+            boolean vigente = p.vigenteEn(hoy);
+            if (!Boolean.valueOf(vigente).equals(p.getActivo())) {
+                p.setActivo(vigente);
+                periodoRepository.save(p);
             }
         }
-        periodoRepository.flush();
-        p.setActivo(true);
-        return PeriodoDto.Response.fromEntity(periodoRepository.save(p));
     }
 }

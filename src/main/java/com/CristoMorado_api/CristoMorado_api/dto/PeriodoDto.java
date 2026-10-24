@@ -15,7 +15,7 @@ public final class PeriodoDto {
                            LocalDate fechaInicio, LocalDate fechaFin, Boolean activo) {
         public static Response fromEntity(Periodo p) {
             return new Response(p.getId(), p.getNombre(), p.getAnio(), p.getBimestre(),
-                    p.getFechaInicio(), p.getFechaFin(), Boolean.TRUE.equals(p.getActivo()));
+                    p.getFechaInicio(), p.getFechaFin(), p.vigenteEn(java.time.LocalDate.now()));
         }
     }
 }
