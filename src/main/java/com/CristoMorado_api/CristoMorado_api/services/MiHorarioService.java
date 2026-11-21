@@ -25,11 +25,6 @@ import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * Alumno > Horario y Cursos: lo que el alumno ve de su propia sección.
- * Solo muestra cursos activos de la sección.
- * Docente > Dashboard: su horario semanal con todas las secciones que dicta.
- */
 @Service
 public class MiHorarioService {
 
@@ -40,9 +35,6 @@ public class MiHorarioService {
     private final HorarioBloqueRepository bloqueRepository;
     private final AccesoService accesoService;
 
-    /**
-     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
-     */
     public MiHorarioService(EstudianteRepository estudianteRepository, SeccionRepository seccionRepository,
                             SeccionCursoRepository seccionCursoRepository, HorarioService horarioService,
                             HorarioBloqueRepository bloqueRepository, AccesoService accesoService) {
@@ -54,7 +46,6 @@ public class MiHorarioService {
         this.horarioService = horarioService;
     }
 
-    /** Horario semanal del docente: los bloques de los cursos activos que dicta. */
     @Transactional(readOnly = true)
     public MiHorarioDto.Docente delDocente(Long usuarioId, String nombre) {
         if (usuarioId == null) throw new AccesoDenegadoException("Inicia sesión para ver tu horario.");
@@ -81,10 +72,6 @@ public class MiHorarioService {
                 min == null ? "07:30" : min.toString(), max == null ? "13:15" : max.toString(), bloques);
     }
 
-    /**
-     * Devuelve del alumno. Solo lee datos (transacción de solo lectura). Si el usuario no tiene
-     * permiso para esta acción, responde con error 403.
-     */
     @Transactional(readOnly = true)
     public MiHorarioDto.Respuesta delAlumno(Long usuarioId) {
         if (usuarioId == null) throw new AccesoDenegadoException("Inicia sesión para ver tu horario.");
@@ -93,7 +80,6 @@ public class MiHorarioService {
         return deEstudiante(e);
     }
 
-    /** Padre > Dashboard / Mis Hijos: horario y cursos de uno de sus hijos (solo lectura). */
     @Transactional(readOnly = true)
     public MiHorarioDto.Respuesta delHijo(Long usuarioId, Long estudianteId) {
         if (usuarioId == null) throw new AccesoDenegadoException("Inicia sesión para ver el horario.");
@@ -101,9 +87,6 @@ public class MiHorarioService {
         return deEstudiante(accesoService.estudianteVisible(usuarioId, estudianteId));
     }
 
-    /**
-     * Devuelve de estudiante.
-     */
     private MiHorarioDto.Respuesta deEstudiante(Estudiante e) {
         if (e.getGrado() == null || e.getSeccion() == null) return vacio(e, null);
 
@@ -134,9 +117,6 @@ public class MiHorarioService {
                 s.getTutor() == null ? null : s.getTutor().getNombreCompleto(), bloques, cursos);
     }
 
-    /**
-     * Devuelve vacio.
-     */
     private static MiHorarioDto.Respuesta vacio(Estudiante e, Turnos.Turno t) {
         return new MiHorarioDto.Respuesta(false, e.getGrado(), e.getSeccion(), t == null ? null : t.nombre(),
                 null, null, null, null, Turnos.MINUTOS_BLOQUE, null, List.of(), List.of());

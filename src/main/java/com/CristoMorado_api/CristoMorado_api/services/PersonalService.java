@@ -21,15 +21,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * "Gestión de Personal Staff" (Directiva). Cada registro tiene su cuenta
- * DIR + N.º de documento con rol DIRECTIVO.
- * - Al crearlo el ADMINISTRADOR: recibe TODOS los permisos (como el admin).
- * - Al crearlo alguien de la Directiva: recibe como máximo los permisos de quien lo crea.
- * - Cambian permisos: el ADMINISTRADOR y quien tenga el permiso "Gestionar permisos"
- *   (p.ej. el Director). Este último no puede tocar sus propios permisos ni dar
- *   permisos que él mismo no tiene.
- */
 @Service
 public class PersonalService {
 
@@ -39,9 +30,6 @@ public class PersonalService {
     private final CuentaService cuentaService;
     private final PermisoService permisoService;
 
-    /**
-     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
-     */
     public PersonalService(PersonalRepository personalRepository, CuentaService cuentaService,
                            PermisoService permisoService) {
         this.personalRepository = personalRepository;
@@ -49,10 +37,6 @@ public class PersonalService {
         this.permisoService = permisoService;
     }
 
-    /**
-     * Devuelve la lista de la directiva y el personal administrativo. Solo lee datos (transacción de
-     * solo lectura).
-     */
     @Transactional(readOnly = true)
     public List<PersonalResponse> listar() {
         return personalRepository.findAll().stream()
@@ -62,20 +46,11 @@ public class PersonalService {
                 .toList();
     }
 
-    /**
-     * Obtiene el miembro del personal indicado por su id. Solo lee datos (transacción de solo
-     * lectura).
-     */
     @Transactional(readOnly = true)
     public PersonalResponse obtener(Long id) {
         return PersonalResponse.fromEntity(buscar(id));
     }
 
-    /**
-     * Crea un nuevo registro (el miembro del personal) con los datos recibidos. Se ejecuta en una
-     * transacción: si algo falla, no se guarda nada a medias. Si el dato ya existe (por ejemplo, un
-     * DNI o usuario repetido), responde con error 409. Guarda los cambios en la base de datos.
-     */
     @Transactional
     public PersonalResponse crear(PersonalRequest req, Long actorId) {
         Usuario actor = permisoService.exigir(actorId, Permiso.USUARIOS);
@@ -85,16 +60,10 @@ public class PersonalService {
         }
         p.setUsuario(cuentaService.crear(UsuarioFormato.DIRECTIVA, p.getNumeroDocumento(), p.nombreCompleto(),
                 ROL_DIRECTIVO, req.password(), true));
-        // Mismos permisos que el administrador (o los de quien lo registra, si es de la Directiva).
         p.setPermisos(new LinkedHashSet<>(permisoService.permisosDe(actor)));
         return PersonalResponse.fromEntity(personalRepository.save(p));
     }
 
-    /**
-     * Actualiza los datos del miembro del personal indicado por su id. Se ejecuta en una transacción:
-     * si algo falla, no se guarda nada a medias. Si el dato ya existe (por ejemplo, un DNI o usuario
-     * repetido), responde con error 409. Guarda los cambios en la base de datos.
-     */
     @Transactional
     public PersonalResponse actualizar(Long id, PersonalRequest req, Long actorId) {
         permisoService.exigir(actorId, Permiso.USUARIOS);
@@ -111,10 +80,6 @@ public class PersonalService {
         return PersonalResponse.fromEntity(personalRepository.save(p));
     }
 
-    /**
-     * Cambia estado. Se ejecuta en una transacción: si algo falla, no se guarda nada a medias. Guarda
-     * los cambios en la base de datos.
-     */
     @Transactional
     public PersonalResponse cambiarEstado(Long id, boolean activo, Long actorId) {
         permisoService.exigir(actorId, Permiso.USUARIOS);
@@ -125,10 +90,6 @@ public class PersonalService {
         return PersonalResponse.fromEntity(personalRepository.save(p));
     }
 
-    /**
-     * El administrador (o quien tenga "Gestionar permisos", como el Director)
-     * decide qué puede hacer cada miembro de la Directiva.
-     */
     @Transactional
     public PersonalResponse actualizarPermisos(Long id, List<String> permisos, Long actorId) {
         Usuario actor = permisoService.exigir(actorId, Permiso.PERMISOS);
@@ -146,7 +107,6 @@ public class PersonalService {
                 nuevos.add(x);
             }
         }
-        // Quien no es administrador no puede dar ni quitar permisos que él mismo no tiene.
         if (!esAdmin) {
             for (String x : Permiso.todos()) {
                 boolean antes = p.getPermisos().contains(x), despues = nuevos.contains(x);
@@ -160,28 +120,16 @@ public class PersonalService {
         return PersonalResponse.fromEntity(personalRepository.save(p));
     }
 
-    // ------------------------------------------------------------------
-
-    /**
-     * Realiza la operación «no es su propio registro». Si el usuario no tiene permiso para esta
-     * acción, responde con error 403.
-     */
     private static void noEsSuPropioRegistro(Personal p, Long actorId, String accion) {
         if (p.getUsuario() != null && p.getUsuario().getId().equals(actorId)) {
             throw new AccesoDenegadoException("No puedes " + accion + ".");
         }
     }
 
-    /**
-     * Devuelve activo (verdadero o falso).
-     */
     private static boolean activo(Personal p) {
         return !"Inactivo".equalsIgnoreCase(p.getEstado());
     }
 
-    /**
-     * Convierte la entidad en este DTO, copiando solo los datos que necesita el frontend.
-     */
     private Personal mapear(Personal p, PersonalRequest req) {
         String tipo = TipoDocumento.normalizar(req.tipoDocumento());
         String numero = TipoDocumento.validarNumero(tipo, req.numeroDocumento());
@@ -205,26 +153,15 @@ public class PersonalService {
         return p;
     }
 
-    /**
-     * Devuelve obligatorio (como texto). Si los datos no son válidos, responde con error 400 y un
-     * mensaje claro para el usuario.
-     */
     private static String obligatorio(String v, String mensaje) {
         if (v == null || v.trim().isEmpty()) throw new DatosInvalidosException(mensaje);
         return v.trim();
     }
 
-    /**
-     * Convierte un texto vacío en null (para no guardar cadenas vacías).
-     */
     private static String vacioANull(String v) {
         return v == null || v.trim().isEmpty() ? null : v.trim();
     }
 
-    /**
-     * Busca el miembro del personal indicado por su id. Si no encuentra el registro, responde con
-     * error 404.
-     */
     private Personal buscar(Long id) {
         return personalRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Registro de personal no encontrado."));

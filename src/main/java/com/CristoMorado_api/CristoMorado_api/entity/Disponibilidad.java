@@ -5,10 +5,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import lombok.*;
 
-/**
- * HU-27: bloque semanal en el que un docente, administrador o directivo atiende
- * reuniones (p.ej. martes 15:00 a 17:00, citas de 30 minutos).
- */
 @Entity
 @Table(name = "disponibilidades")
 @Getter
@@ -26,7 +22,6 @@ public class Disponibilidad {
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
 
-    /** 1 = Lunes ... 6 = Sábado. */
     @Column(nullable = false)
     private Integer dia;
 
@@ -36,17 +31,14 @@ public class Disponibilidad {
     @Column(name = "hora_fin", nullable = false)
     private LocalTime horaFin;
 
-    /** Duración de cada cita en minutos (15, 20, 30, 45 o 60). */
     @Column(name = "duracion_minutos", nullable = false)
     @Builder.Default
     private Integer duracionMinutos = 30;
 
-    /** PRESENCIAL | VIRTUAL */
     @Column(nullable = false, length = 15)
     @Builder.Default
     private String modalidad = "PRESENCIAL";
 
-    /** Aula / oficina, o enlace de la reunión virtual. */
     @Column(length = 300)
     private String lugar;
 

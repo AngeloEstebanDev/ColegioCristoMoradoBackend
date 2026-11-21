@@ -8,15 +8,6 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * HU-19: escala vigesimal (0 a 20) y promedios.
- *  - Promedio de un curso en un bimestre: ponderado por el peso de cada evaluación
- *    (las evaluaciones sin nota no cuentan).
- *  - Promedio anual de un curso: promedio de sus bimestres con nota.
- *  - Promedio general: promedio de los cursos.
- *  - Redondeo: 10.5 -> 11 (mitad hacia arriba). Aprueba con 11.
- *  - Equivalencia literal: AD 18-20, A 14-17, B 11-13, C 0-10.
- */
 public final class Calificacion {
 
     public static final double MINIMA = 0;
@@ -26,18 +17,10 @@ public final class Calificacion {
     public static final Set<String> TIPOS = Set.of(
             "EXAMEN", "PRACTICA", "TAREA", "CUESTIONARIO", "ACTIVIDAD", "PARTICIPACION", "PROYECTO", "OTRO");
 
-    /**
-     * Constructor de Calificacion.
-     */
     private Calificacion() {}
 
-    /**
-     * Estructura de datos Ponderada (record): agrupa ponderada en un solo objeto inmutable que viaja
-     * como JSON.
-     */
     public record Ponderada(double valor, int peso) {}
 
-    /** Promedio ponderado; null si no hay notas. */
     public static Double ponderado(Collection<Ponderada> notas) {
         double suma = 0;
         int pesos = 0;
@@ -49,7 +32,6 @@ public final class Calificacion {
         return pesos == 0 ? null : dosDecimales(suma / pesos);
     }
 
-    /** Promedio simple de los valores no nulos; null si no hay ninguno. */
     public static Double simple(Collection<Double> valores) {
         double suma = 0;
         int n = 0;
@@ -59,23 +41,14 @@ public final class Calificacion {
         return n == 0 ? null : dosDecimales(suma / n);
     }
 
-    /**
-     * Devuelve dos decimales.
-     */
     public static Double dosDecimales(double v) {
         return BigDecimal.valueOf(v).setScale(2, RoundingMode.HALF_UP).doubleValue();
     }
 
-    /**
-     * Redondea.
-     */
     public static Integer redondear(Double v) {
         return v == null ? null : BigDecimal.valueOf(v).setScale(0, RoundingMode.HALF_UP).intValue();
     }
 
-    /**
-     * Devuelve literal (como texto).
-     */
     public static String literal(Double v) {
         Integer r = redondear(v);
         if (r == null) return null;
@@ -85,22 +58,15 @@ public final class Calificacion {
         return "C";
     }
 
-    /**
-     * Devuelve aprobado (verdadero o falso).
-     */
     public static boolean aprobado(Double v) {
         Integer r = redondear(v);
         return r != null && r >= APROBATORIA;
     }
 
-    /**
-     * Devuelve promedio.
-     */
     public static NotaDto.Promedio promedio(Double v) {
         return new NotaDto.Promedio(v, redondear(v), literal(v));
     }
 
-    /** Valida una nota vigesimal y la deja con 2 decimales. */
     public static Double validar(Double v) {
         Objects.requireNonNull(v);
         if (v.isNaN() || v < MINIMA || v > MAXIMA) {

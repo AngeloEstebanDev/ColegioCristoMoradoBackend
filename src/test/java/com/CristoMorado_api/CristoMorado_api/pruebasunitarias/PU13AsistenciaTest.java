@@ -17,11 +17,6 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-/**
- * PU-13 – HU-18: Registro de asistencia (Épica 4, Sprint 4).
- * Estados permitidos: PRESENTE, TARDANZA, FALTA y JUSTIFICADA (AsistenciaService.estadoValido).
- * La asistencia solo se genera durante la hora de clase del horario (AsistenciaService.generar).
- */
 @DisplayName("PU-13 – HU-18: Registro de asistencia")
 class PU13AsistenciaTest {
 
@@ -31,10 +26,6 @@ class PU13AsistenciaTest {
     private HorarioBloqueRepository bloqueRepository;
     private AsistenciaService servicio;
 
-    /**
-     * Se ejecuta antes de cada prueba: crea los mocks (objetos simulados con Mockito) y los datos de
-     * ejemplo.
-     */
     @BeforeEach
     void setUp() {
         sesionRepository = mock(SesionAsistenciaRepository.class);
@@ -46,7 +37,6 @@ class PU13AsistenciaTest {
         SeccionCurso matematica = SeccionCurso.builder().id(CURSO).seccion(quintoA)
                 .curso(Curso.builder().id(1L).nombre("Matemática").build()).build();
         when(accesoService.cursoDelDocente(DOCENTE, CURSO)).thenReturn(matematica);
-        // Hoy hay clase de Matemática, pero en un horario en el que NO estamos ahora.
         LocalTime ahora = LocalTime.now();
         LocalTime ini = ahora.isBefore(LocalTime.NOON) ? LocalTime.of(22, 0) : LocalTime.of(1, 0);
         when(bloqueRepository.findBySeccionCursoId(CURSO)).thenReturn(List.of(HorarioBloque.builder().id(1L)
@@ -54,10 +44,6 @@ class PU13AsistenciaTest {
                 .horaInicio(ini).horaFin(ini.plusMinutes(45)).build()));
     }
 
-    /**
-     * Caso de prueba: PU-13.1 Estado de asistencia permitido: la validación es exitosa. Prepara los
-     * datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
-     */
     @Test
     @DisplayName("PU-13.1 Estado de asistencia permitido: la validación es exitosa")
     void c1_estadoPermitido() {
@@ -67,10 +53,6 @@ class PU13AsistenciaTest {
         assertEquals("JUSTIFICADA", AsistenciaService.estadoValido("justificada"));
     }
 
-    /**
-     * Caso de prueba: PU-13.2 Estado inexistente: se rechaza. Prepara los datos (arrange), ejecuta el
-     * método (act) y comprueba el resultado esperado (assert).
-     */
     @Test
     @DisplayName("PU-13.2 Estado inexistente: se rechaza")
     void c2_estadoInexistente() {
@@ -80,11 +62,6 @@ class PU13AsistenciaTest {
         assertEquals("Estado de asistencia no válido: DORMIDO", ex.getMessage());
     }
 
-    /**
-     * Caso de prueba: PU-13.3 Generar asistencia fuera del horario programado: se deniega la
-     * operación. Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado
-     * esperado (assert). Guarda los cambios en la base de datos.
-     */
     @Test
     @DisplayName("PU-13.3 Generar asistencia fuera del horario programado: se deniega la operación")
     void c3_fueraDeHorario() {

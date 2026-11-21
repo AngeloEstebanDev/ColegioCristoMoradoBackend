@@ -10,27 +10,14 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-/**
- * HU-32: genera un archivo Excel (.xlsx, Office Open XML) a partir de una tabla de reporte.
- * No necesita librerías externas: un .xlsx es un ZIP con archivos XML.
- * Estructura de la hoja:
- *   fila 1: título (negrita) — fila 2: subtítulo — fila 3: indicadores — fila 5: encabezados — luego los datos.
- */
 public final class ExcelXlsx {
 
     public static final String CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
-    // Estilos (índices de cellXfs en styles.xml)
     private static final int S_TITULO = 1, S_ENCABEZADO = 2, S_SUBTITULO = 3, S_TEXTO = 4, S_DECIMAL = 5, S_ENTERO = 6;
 
-    /**
-     * Constructor de ExcelXlsx.
-     */
     private ExcelXlsx() {}
 
-    /**
-     * Genera.
-     */
     public static byte[] generar(ReporteDto.Tabla tabla) {
         try {
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -48,9 +35,6 @@ public final class ExcelXlsx {
         }
     }
 
-    /**
-     * Devuelve hoja (como texto).
-     */
     private static String hoja(ReporteDto.Tabla t) {
         List<String> columnas = t.columnas();
         int nCols = Math.max(1, columnas.size());
@@ -68,7 +52,6 @@ public final class ExcelXlsx {
           .append("\" activePane=\"bottomLeft\" state=\"frozen\"/></sheetView></sheetViews>")
           .append("<sheetFormatPr defaultRowHeight=\"15\"/>");
 
-        // Ancho de columnas según el contenido más largo (máximo 60).
         sb.append("<cols>");
         for (int c = 0; c < nCols; c++) {
             int ancho = c < columnas.size() ? largo(columnas.get(c)) : 8;
@@ -114,7 +97,6 @@ public final class ExcelXlsx {
         return sb.toString();
     }
 
-    /** estilo -1 = según el tipo de dato (texto / entero / decimal) con borde. */
     private static void fila(StringBuilder sb, int numero, List<?> celdas, int estilo, String alto) {
         sb.append("<row r=\"").append(numero).append('"');
         if (alto != null) sb.append(" ht=\"").append(alto).append("\" customHeight=\"1\"");
@@ -137,7 +119,6 @@ public final class ExcelXlsx {
         sb.append("</row>");
     }
 
-    /** 0 -> A, 25 -> Z, 26 -> AA ... */
     static String columna(int indice) {
         StringBuilder sb = new StringBuilder();
         int n = indice + 1;
@@ -149,16 +130,12 @@ public final class ExcelXlsx {
         return sb.toString();
     }
 
-    /**
-     * Devuelve largo.
-     */
     private static int largo(Object v) {
         if (v == null) return 0;
         if (v instanceof Double d) return String.format("%.2f", d).length();
         return String.valueOf(v).length();
     }
 
-    /** Escapa XML y quita caracteres de control no válidos. */
     private static String xml(String s) {
         StringBuilder sb = new StringBuilder(s.length());
         for (char ch : s.toCharArray()) {
@@ -175,26 +152,17 @@ public final class ExcelXlsx {
         return sb.toString();
     }
 
-    /**
-     * Devuelve nombre hoja (como texto).
-     */
     private static String nombreHoja(String titulo) {
         String n = titulo == null || titulo.isBlank() ? "Reporte" : titulo.replaceAll("[\\[\\]:*?/\\\\]", " ").trim();
         return n.length() > 31 ? n.substring(0, 31).trim() : n;
     }
 
-    /**
-     * Agrega.
-     */
     private static void agregar(ZipOutputStream zip, String nombre, String contenido) throws IOException {
         zip.putNextEntry(new ZipEntry(nombre));
         zip.write(contenido.getBytes(StandardCharsets.UTF_8));
         zip.closeEntry();
     }
 
-    /**
-     * Devuelve workbook (como texto).
-     */
     private static String workbook(String hoja) {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
                 + "<workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" "
@@ -223,7 +191,6 @@ public final class ExcelXlsx {
             + "<Relationship Id=\"rId2\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles\" Target=\"styles.xml\"/>"
             + "</Relationships>";
 
-    /** Colores del sistema: morado #4A1F52 en los encabezados. */
     private static final String ESTILOS = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
             + "<styleSheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">"
             + "<numFmts count=\"1\"><numFmt numFmtId=\"164\" formatCode=\"0.00\"/></numFmts>"

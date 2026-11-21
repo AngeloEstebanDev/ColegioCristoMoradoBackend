@@ -5,5 +5,4 @@ out/
 *.iml
 .env
 
-### Configuración local con contraseñas ###
 local.properties

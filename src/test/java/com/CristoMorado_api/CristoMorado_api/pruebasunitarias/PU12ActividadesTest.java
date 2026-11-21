@@ -15,7 +15,6 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-/** PU-12 – HU-14: Gestión de actividades (Épica 4, Sprint 4). AulaService.crearActividad (docente). */
 @DisplayName("PU-12 – HU-14: Gestión de actividades")
 class PU12ActividadesTest {
 
@@ -24,10 +23,6 @@ class PU12ActividadesTest {
     private ActividadRepository actividadRepository;
     private AulaService servicio;
 
-    /**
-     * Se ejecuta antes de cada prueba: crea los mocks (objetos simulados con Mockito) y los datos de
-     * ejemplo. Guarda los cambios en la base de datos.
-     */
     @BeforeEach
     void setUp() {
         actividadRepository = mock(ActividadRepository.class);
@@ -44,19 +39,11 @@ class PU12ActividadesTest {
         when(actividadRepository.save(any(Actividad.class))).thenAnswer(inv -> { Actividad a = inv.getArgument(0); a.setId(501L); return a; });
     }
 
-    /**
-     * Devuelve actividad.
-     */
     private static AulaDto.ActividadRequest actividad(String titulo, LocalDateTime limite) {
         return new AulaDto.ActividadRequest("TAREA", titulo, "<p>Resuelve la página 45 del libro.</p>", limite, 20.0,
                 false, null, null, null, List.of(), 1, null, List.of("PDF"));
     }
 
-    /**
-     * Caso de prueba: PU-12.1 Actividad con los campos obligatorios completos: validación exitosa.
-     * Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
-     * Guarda los cambios en la base de datos.
-     */
     @Test
     @DisplayName("PU-12.1 Actividad con los campos obligatorios completos: validación exitosa")
     void c1_actividadValida() {
@@ -67,11 +54,6 @@ class PU12ActividadesTest {
         verify(actividadRepository, times(1)).save(any(Actividad.class));
     }
 
-    /**
-     * Caso de prueba: PU-12.2 Actividad sin título: se rechaza. Prepara los datos (arrange), ejecuta
-     * el método (act) y comprueba el resultado esperado (assert). Guarda los cambios en la base de
-     * datos.
-     */
     @Test
     @DisplayName("PU-12.2 Actividad sin título: se rechaza")
     void c2_sinTitulo() {
@@ -82,11 +64,6 @@ class PU12ActividadesTest {
         verify(actividadRepository, never()).save(any(Actividad.class));
     }
 
-    /**
-     * Caso de prueba: PU-12.3 Fecha de entrega inválida (vacía o ya pasada): se rechaza. Prepara los
-     * datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert). Guarda los
-     * cambios en la base de datos.
-     */
     @Test
     @DisplayName("PU-12.3 Fecha de entrega inválida (vacía o ya pasada): se rechaza")
     void c3_fechaInvalida() {

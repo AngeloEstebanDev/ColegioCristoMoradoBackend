@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import lombok.*;
 
-/** HU-13: material que el docente pública en uno de sus cursos (texto, archivo o enlace), dentro de una carpeta. */
 @Entity
 @Table(name = "materiales")
 @Getter
@@ -28,11 +27,9 @@ public class Material {
     @Column(columnDefinition = "TEXT")
     private String descripcion;
 
-    /** Enlace opcional (video, página web, Drive...). */
     @Column(length = 500)
     private String enlace;
 
-    /** Archivo opcional (tabla archivos). */
     @Column(name = "archivo_id")
     private Long archivoId;
 
@@ -55,16 +52,13 @@ public class Material {
     @Column(name = "fecha_actualizacion")
     private LocalDateTime fechaActualizacion;
 
-    /** TEXTO (mensaje con formato e imagen opcional) | ARCHIVO | ENLACE. null en materiales antiguos. */
     @Column(length = 20)
     private String tipo;
 
-    /** false = oculto para alumnos y padres. */
     @Column(nullable = false, columnDefinition = "boolean default true")
     @Builder.Default
     private Boolean visible = true;
 
-    /** Carpeta del curso donde está (null = sin carpeta). */
     @Column(name = "carpeta_id")
     private Long carpetaId;
 }

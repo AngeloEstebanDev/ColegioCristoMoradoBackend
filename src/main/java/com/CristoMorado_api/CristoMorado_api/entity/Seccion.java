@@ -5,10 +5,6 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-/**
- * Sección de un grado (p.ej. "1° Secundaria" - "A").
- * Sus alumnos son los estudiantes con el mismo grado y sección.
- */
 @Entity
 @Table(name = "secciones", uniqueConstraints = @UniqueConstraint(columnNames = {"grado", "letra"}))
 @Getter
@@ -23,14 +19,14 @@ public class Seccion {
     private Long id;
 
     @Column(nullable = false, length = 20)
-    private String grado;          // "1° Primaria" ... "5° Secundaria"
+    private String grado;
 
     @Column(nullable = false, length = 5)
-    private String letra;          // "A", "B", ...
+    private String letra;
 
     @Column(nullable = false, length = 10)
     @Builder.Default
-    private String turno = "Mañana";   // A = Mañana, B = Tarde (lo fija la letra)
+    private String turno = "Mañana";
 
     @Column(nullable = false)
     @Builder.Default
@@ -38,9 +34,8 @@ public class Seccion {
 
     @Column(nullable = false, length = 10)
     @Builder.Default
-    private String estado = "Activa";  // Activa | Inactiva
+    private String estado = "Activa";
 
-    /** Docente tutor (opcional). Un docente es tutor de una sola sección a la vez. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tutor_id")
     private Docente tutor;

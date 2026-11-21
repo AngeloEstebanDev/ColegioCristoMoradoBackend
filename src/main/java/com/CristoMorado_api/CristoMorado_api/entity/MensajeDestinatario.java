@@ -5,18 +5,11 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-/** Un destinatario de un mensaje, con su propio estado leído/eliminado. */
 @Entity
 @Table(name = "mensaje_destinatarios",
         uniqueConstraints = @UniqueConstraint(
                 name = "mensaje_destinatarios_unique",
                 columnNames = {"mensaje_id", "destinatario_id"}))
-/**
- * Entidad MensajeDestinatario: representa la tabla «mensaje_destinatarios» de la base de datos (los
- * destinatarios de cada mensaje (y si ya lo leyeron)). Cada atributo es una columna y cada objeto es
- * una fila. Hibernate (JPA) se encarga de leer y guardar estos datos. Lombok genera los getters,
- * setters y el builder para no escribirlos a mano.
- */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -43,7 +36,6 @@ public class MensajeDestinatario {
     @Column(name = "fecha_lectura")
     private LocalDateTime fechaLectura;
 
-    /** El destinatario lo quitó de su bandeja "Recibidos". */
     @Column(nullable = false, columnDefinition = "boolean default false")
     @Builder.Default
     private Boolean eliminado = false;

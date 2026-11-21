@@ -19,10 +19,6 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-/**
- * Centro de Control de Reportes (HU-30 y HU-31): exportar notas de una sección,
- * reporte de notas por alumno y reporte de asistencia por alumno.
- */
 @DisplayName("RC – Centro de Control de Reportes")
 class ReportesCentroTest {
 
@@ -34,10 +30,6 @@ class ReportesCentroTest {
     private Estudiante juan, maria;
     private SeccionCurso mat, com;
 
-    /**
-     * Se ejecuta antes de cada prueba: crea los mocks (objetos simulados con Mockito) y los datos de
-     * ejemplo.
-     */
     @BeforeEach
     void setUp() {
         SeccionRepository seccionRepository = mock(SeccionRepository.class);
@@ -68,10 +60,6 @@ class ReportesCentroTest {
         when(accesoService.alumnosDe(quintoA)).thenReturn(List.of(juan, maria));
     }
 
-    /**
-     * Caso de prueba: RC-01 Opciones: grados, secciones, cursos y alumnos para los filtros. Prepara
-     * los datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
-     */
     @Test
     @DisplayName("RC-01 Opciones: grados, secciones, cursos y alumnos para los filtros")
     void c1_opciones() {
@@ -84,11 +72,6 @@ class ReportesCentroTest {
         assertEquals(8L, o.alumnos().get(0).seccionId());
     }
 
-    /**
-     * Caso de prueba: RC-02 Exportar notas: registro de una sección y opción «Todos» en grado, sección
-     * y periodo. Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado
-     * esperado (assert).
-     */
     @Test
     @DisplayName("RC-02 Exportar notas: registro de una sección y opción «Todos» en grado, sección y periodo")
     void c2_exportarNotas() {
@@ -99,27 +82,21 @@ class ReportesCentroTest {
         assertEquals("Registro de notas - 5° Primaria A", t.titulo());
         assertEquals(2, t.filas().size());
 
-        // "Todas las secciones" de un grado con una sola sección: mismo registro clásico.
         ReporteDto.Tabla grado = servicio.generar("notas", 1L, null, null, null, "5° Primaria", null, null);
         assertEquals("Registro de notas - 5° Primaria A", grado.titulo());
         assertEquals(2, grado.filas().size());
 
-        // Todos los grados, secciones y periodos: se unen los registros con Grado, Sección y Período al inicio.
         ReporteDto.Tabla todo = servicio.generar("notas", null, null, null, null, null, null, null);
         assertEquals("Registro de notas - Todos los grados", todo.titulo());
         assertEquals(List.of("Grado", "Sección", "Período", "N°", "Alumno"), todo.columnas().subList(0, 5));
         assertTrue(todo.columnas().containsAll(List.of("Matemática", "Comunicación", "Promedio", "Situación")));
-        assertEquals(4, todo.filas().size());                       // 2 alumnos x 2 bimestres (6° A no tiene alumnos)
+        assertEquals(4, todo.filas().size());
         assertEquals(List.of("5° Primaria", "A", "I Bimestre"), todo.filas().get(0).subList(0, 3));
         assertEquals("II Bimestre", todo.filas().get(2).get(2));
         assertTrue(assertThrows(DatosInvalidosException.class,
                 () -> servicio.generar("notas", 1L, 8L, null, null, "6° Primaria", null, null)).getMessage().contains("no pertenece"));
     }
 
-    /**
-     * Caso de prueba: RC-03 Notas por alumno: una fila por nota, filtrando por alumno y curso. Prepara
-     * los datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
-     */
     @Test
     @DisplayName("RC-03 Notas por alumno: una fila por nota, filtrando por alumno y curso")
     void c3_notasPorAlumno() {
@@ -148,10 +125,6 @@ class ReportesCentroTest {
         assertEquals(15.0, filtrado.filas().get(0).get(6));
     }
 
-    /**
-     * Caso de prueba: RC-04 Asistencia por alumno: fecha, estado en texto e indicadores. Prepara los
-     * datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
-     */
     @Test
     @DisplayName("RC-04 Asistencia por alumno: fecha, estado en texto e indicadores")
     void c4_asistenciaPorAlumno() {
@@ -172,10 +145,6 @@ class ReportesCentroTest {
         assertEquals(1, soloMaria.filas().size());
     }
 
-    /**
-     * Caso de prueba: RC-05 Filtros inválidos: grado inexistente o sección de otro grado. Prepara los
-     * datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
-     */
     @Test
     @DisplayName("RC-05 Filtros inválidos: grado inexistente o sección de otro grado")
     void c5_filtrosInvalidos() {

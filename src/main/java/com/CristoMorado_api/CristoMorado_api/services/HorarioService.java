@@ -21,12 +21,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 
-/**
- * Editor de horario de una sección (Académico > Grados y Secciones > Horario).
- * El turno sale de la letra: A = mañana, B = tarde (ver {@link Turnos}).
- * Cuando se guarda un cambio, los alumnos de la sección reciben un aviso
- * en su mensajería ("Avisos del colegio") para que revisen su horario.
- */
 @Service
 public class HorarioService {
 
@@ -39,9 +33,6 @@ public class HorarioService {
     private final EstudianteRepository estudianteRepository;
     private final MensajeService mensajeService;
 
-    /**
-     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
-     */
     public HorarioService(SeccionRepository seccionRepository, SeccionCursoRepository seccionCursoRepository,
                           HorarioBloqueRepository bloqueRepository, EstudianteRepository estudianteRepository,
                           MensajeService mensajeService) {
@@ -52,16 +43,12 @@ public class HorarioService {
         this.mensajeService = mensajeService;
     }
 
-    /**
-     * Obtiene el horario. Solo lee datos (transacción de solo lectura).
-     */
     @Transactional(readOnly = true)
     public HorarioDto.Respuesta obtener(Long seccionId) {
         Seccion s = buscar(seccionId);
         return respuesta(s, turno(s));
     }
 
-    /** Reemplaza todo el horario de la sección (botón "Guardar" del editor). */
     @Transactional
     public HorarioDto.Respuesta guardar(Long seccionId, HorarioDto.GuardarRequest req) {
         Seccion s = buscar(seccionId);
@@ -107,12 +94,8 @@ public class HorarioService {
         return respuesta(s, t);
     }
 
-    /**
-     * Un docente no puede tener dos clases a la misma hora en secciones distintas.
-     * (Los cruces dentro de la misma sección se revisan al armar la lista de bloques.)
-     */
     private void validarCruceDocentes(Seccion s, List<HorarioBloque> nuevos) {
-        Map<Long, List<HorarioBloque>> otrasClases = new HashMap<>();   // usuarioId del docente -> bloques en otras secciones
+        Map<Long, List<HorarioBloque>> otrasClases = new HashMap<>();
         for (HorarioBloque b : nuevos) {
             Docente d = b.getSeccionCurso().getDocente();
             if (d == null || d.getUsuarioId() == null) continue;
@@ -137,7 +120,6 @@ public class HorarioService {
         }
     }
 
-    /** Nombres de los cursos cuyos bloques (día y horas) cambiaron. */
     private static List<String> cursosCambiados(List<HorarioBloque> antes, List<HorarioBloque> despues) {
         Map<Long, Set<String>> a = huella(antes), d = huella(despues);
         Map<Long, String> nombres = new HashMap<>();
@@ -150,9 +132,6 @@ public class HorarioService {
         return new ArrayList<>(res);
     }
 
-    /**
-     * Devuelve huella (como mapa clave → valor).
-     */
     private static Map<Long, Set<String>> huella(List<HorarioBloque> bloques) {
         Map<Long, Set<String>> m = new HashMap<>();
         for (HorarioBloque b : bloques) {
@@ -162,7 +141,6 @@ public class HorarioService {
         return m;
     }
 
-    /** Mensaje automático a cada alumno (con cuenta) de la sección. */
     private void avisarAlumnos(Seccion s, List<String> cursos) {
         List<com.CristoMorado_api.CristoMorado_api.entity.Usuario> destinos = new ArrayList<>();
         for (Estudiante e : estudianteRepository.findByGradoAndSeccionOrderByNombreCompletoAsc(s.getGrado(), s.getLetra())) {
@@ -177,11 +155,6 @@ public class HorarioService {
         mensajeService.enviarAviso(destinos, "Cambio de horario", html);
     }
 
-    // ------------------------------------------------------------------
-
-    /**
-     * Devuelve respuesta.
-     */
     private HorarioDto.Respuesta respuesta(Seccion s, Turnos.Turno t) {
         List<HorarioDto.Bloque> bloques = bloqueRepository.findBySeccionId(s.getId()).stream()
                 .sorted(Comparator.comparing(HorarioBloque::getDia).thenComparing(HorarioBloque::getHoraInicio))
@@ -197,10 +170,6 @@ public class HorarioService {
                 Turnos.MINUTOS_BLOQUE, bloques);
     }
 
-    /**
-     * Devuelve turno. Si los datos no son válidos, responde con error 400 y un mensaje claro para el
-     * usuario.
-     */
     private static Turnos.Turno turno(Seccion s) {
         Turnos.Turno t = Turnos.de(s.getGrado(), s.getLetra(), s.getTurno());
         if (t == null) throw new DatosInvalidosException("La sección " + s.getLetra() + " de " + s.getGrado()
@@ -208,10 +177,6 @@ public class HorarioService {
         return t;
     }
 
-    /**
-     * Devuelve hora. Si los datos no son válidos, responde con error 400 y un mensaje claro para el
-     * usuario.
-     */
     private static LocalTime hora(String valor) {
         try {
             return LocalTime.parse(valor == null ? "" : valor.trim(), HHMM);
@@ -220,16 +185,10 @@ public class HorarioService {
         }
     }
 
-    /**
-     * Devuelve el texto de los horarios de clase.
-     */
     private static String texto(LocalTime h) {
         return h.format(HHMM);
     }
 
-    /**
-     * Busca el horario indicado por su id. Si no encuentra el registro, responde con error 404.
-     */
     private Seccion buscar(Long id) {
         return seccionRepository.findById(id).orElseThrow(() -> new RecursoNoEncontradoException("Sección no encontrada."));
     }

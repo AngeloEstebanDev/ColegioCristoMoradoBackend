@@ -3,10 +3,6 @@ package com.CristoMorado_api.CristoMorado_api.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-/**
- * Tabla puente entre Estudiante y PadreFamilia (relación muchos a muchos),
- * con el parentesco de cada vínculo (Padre / Madre / Apoderado).
- */
 @Entity
 @Table(name = "estudiante_familiar")
 @Getter
@@ -29,5 +25,5 @@ public class EstudianteFamiliar {
     private PadreFamilia padreFamilia;
 
     @Column(nullable = false, length = 20)
-    private String parentesco; // Padre, Madre, Apoderado
+    private String parentesco;
 }

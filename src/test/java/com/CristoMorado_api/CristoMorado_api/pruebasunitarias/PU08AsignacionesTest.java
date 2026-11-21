@@ -13,7 +13,6 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-/** PU-08 – HU-10 y HU-12: Asignaciones académicas (Épica 3, Sprint 3). SeccionService.agregarCurso y matricular. */
 @DisplayName("PU-08 – HU-10 y HU-12: Asignaciones académicas")
 class PU08AsignacionesTest {
 
@@ -22,10 +21,6 @@ class PU08AsignacionesTest {
     private SeccionService servicio;
     private Estudiante lucia;
 
-    /**
-     * Se ejecuta antes de cada prueba: crea los mocks (objetos simulados con Mockito) y los datos de
-     * ejemplo.
-     */
     @BeforeEach
     void setUp() {
         SeccionRepository seccionRepository = mock(SeccionRepository.class);
@@ -43,11 +38,6 @@ class PU08AsignacionesTest {
         when(estudianteRepository.countByGradoAndSeccion("5° Primaria", "A")).thenReturn(25L);
     }
 
-    /**
-     * Caso de prueba: PU-08.1 Asignar un curso a un grado y sección existentes: la asignación es
-     * válida. Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado esperado
-     * (assert). Guarda los cambios en la base de datos.
-     */
     @Test
     @DisplayName("PU-08.1 Asignar un curso a un grado y sección existentes: la asignación es válida")
     void c1_asignarCurso() {
@@ -56,11 +46,6 @@ class PU08AsignacionesTest {
         verify(seccionCursoRepository, times(1)).save(any(SeccionCurso.class));
     }
 
-    /**
-     * Caso de prueba: PU-08.2 Asignar un estudiante a una sección existente: la operación es válida.
-     * Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
-     * Guarda los cambios en la base de datos.
-     */
     @Test
     @DisplayName("PU-08.2 Asignar un estudiante a una sección existente: la operación es válida")
     void c2_matricularEstudiante() {
@@ -71,11 +56,6 @@ class PU08AsignacionesTest {
         verify(estudianteRepository, times(1)).save(lucia);
     }
 
-    /**
-     * Caso de prueba: PU-08.3 Identificador de sección inexistente: se rechaza la asignación. Prepara
-     * los datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert). Guarda
-     * los cambios en la base de datos.
-     */
     @Test
     @DisplayName("PU-08.3 Identificador de sección inexistente: se rechaza la asignación")
     void c3_seccionInexistente() {

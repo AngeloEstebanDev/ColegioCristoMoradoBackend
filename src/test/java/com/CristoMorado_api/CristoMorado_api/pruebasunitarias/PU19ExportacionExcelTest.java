@@ -14,20 +14,15 @@ import java.util.zip.ZipInputStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** PU-19 – HU-31: Exportación de reportes a Excel (Épica 5, Sprint 5). ExcelXlsx.generar. */
 @DisplayName("PU-19 – HU-31: Exportación a Excel")
 class PU19ExportacionExcelTest {
 
-    /**
-     * Devuelve tabla.
-     */
     private static ReporteDto.Tabla tabla(List<List<Object>> filas) {
         return new ReporteDto.Tabla("rendimiento", "Rendimiento académico - 5° Primaria A", "I Bimestre 2026",
                 List.of("N°", "Alumno", "Promedio"), filas,
                 List.of(new ReporteDto.Indicador("Alumnos", String.valueOf(filas.size()), null)));
     }
 
-    /** Abre el .xlsx (es un ZIP) y devuelve cada archivo interno como texto. */
     private static Map<String, String> abrir(byte[] xlsx) throws IOException {
         Map<String, String> partes = new HashMap<>();
         try (ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(xlsx), StandardCharsets.UTF_8)) {
@@ -38,10 +33,6 @@ class PU19ExportacionExcelTest {
         return partes;
     }
 
-    /**
-     * Caso de prueba: PU-19.1 Datos válidos: se genera un archivo .xlsx válido. Prepara los datos
-     * (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
-     */
     @Test
     @DisplayName("PU-19.1 Datos válidos: se genera un archivo .xlsx válido")
     void c1_archivoValido() throws IOException {
@@ -59,11 +50,6 @@ class PU19ExportacionExcelTest {
         assertTrue(partes.get("[Content_Types].xml").contains("spreadsheetml.sheet.main+xml"));
     }
 
-    /**
-     * Caso de prueba: PU-19.2 Lista vacía: el archivo se genera con título y encabezados, sin filas de
-     * datos. Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado esperado
-     * (assert).
-     */
     @Test
     @DisplayName("PU-19.2 Lista vacía: el archivo se genera con título y encabezados, sin filas de datos")
     void c2_listaVacia() throws IOException {
@@ -76,10 +62,6 @@ class PU19ExportacionExcelTest {
         assertFalse(hoja.contains("<autoFilter"), "Sin datos no se agrega filtro");
     }
 
-    /**
-     * Caso de prueba: PU-19.3 Encabezados y valores del archivo corresponden a los datos exportados.
-     * Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
-     */
     @Test
     @DisplayName("PU-19.3 Encabezados y valores del archivo corresponden a los datos exportados")
     void c3_encabezadosYValores() throws IOException {

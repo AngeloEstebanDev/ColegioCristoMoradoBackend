@@ -15,25 +15,17 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * Académico > Catálogo de Cursos. De aquí salen los cursos de "Agregar curso"
- * en cada sección y sus colores en el horario.
- */
 @Service
 public class CursoService {
 
     private final CursoRepository cursoRepository;
     private final SeccionCursoRepository seccionCursoRepository;
 
-    /**
-     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
-     */
     public CursoService(CursoRepository cursoRepository, SeccionCursoRepository seccionCursoRepository) {
         this.cursoRepository = cursoRepository;
         this.seccionCursoRepository = seccionCursoRepository;
     }
 
-    /** Cursos activos, ordenados por categoría y en el orden en que se registraron. */
     @Transactional(readOnly = true)
     public List<CursoResponse> listar() {
         return cursoRepository.findByEstadoOrderByNombreAsc("Activo").stream()
@@ -43,11 +35,6 @@ public class CursoService {
                 .toList();
     }
 
-    /**
-     * Crea un nuevo registro (el curso) con los datos recibidos. Se ejecuta en una transacción: si
-     * algo falla, no se guarda nada a medias. Si el dato ya existe (por ejemplo, un DNI o usuario
-     * repetido), responde con error 409. Guarda los cambios en la base de datos.
-     */
     @Transactional
     public CursoResponse crear(CursoRequest req) {
         String nombre = nombre(req);
@@ -59,7 +46,6 @@ public class CursoService {
         if (c == null) {
             c = Curso.builder().nombre(nombre).build();
         }
-        // Si se había eliminado (estaba en alguna sección), vuelve al catálogo.
         c.setNombre(nombre);
         c.setCategoria(cat.clave());
         c.setColor(cat.color());
@@ -68,11 +54,6 @@ public class CursoService {
         return CursoResponse.fromEntity(c, seccionCursoRepository.countByCursoId(c.getId()));
     }
 
-    /**
-     * Actualiza los datos del curso indicado por su id. Se ejecuta en una transacción: si algo falla,
-     * no se guarda nada a medias. Si el dato ya existe (por ejemplo, un DNI o usuario repetido),
-     * responde con error 409. Guarda los cambios en la base de datos.
-     */
     @Transactional
     public CursoResponse actualizar(Long id, CursoRequest req) {
         Curso c = buscar(id);
@@ -88,11 +69,6 @@ public class CursoService {
         return CursoResponse.fromEntity(guardado, seccionCursoRepository.countByCursoId(guardado.getId()));
     }
 
-    /**
-     * Sin secciones: se borra. Si ya está en alguna sección, sale del catálogo
-     * (no se ofrece más) pero esas secciones y sus horarios lo conservan.
-     * @return cuántas secciones lo conservan
-     */
     @Transactional
     public long eliminar(Long id) {
         Curso c = buscar(id);
@@ -106,10 +82,6 @@ public class CursoService {
         return usos;
     }
 
-    /**
-     * Devuelve nombre (como texto). Si los datos no son válidos, responde con error 400 y un mensaje
-     * claro para el usuario.
-     */
     private static String nombre(CursoRequest req) {
         String n = req == null || req.nombre() == null ? "" : req.nombre().trim().replaceAll("\\s+", " ");
         if (n.isEmpty()) throw new DatosInvalidosException("Ingresa el nombre del curso.");
@@ -118,19 +90,12 @@ public class CursoService {
         return n;
     }
 
-    /**
-     * Devuelve categoría. Si los datos no son válidos, responde con error 400 y un mensaje claro para
-     * el usuario.
-     */
     private static CategoriaCurso.Info categoria(CursoRequest req) {
         CategoriaCurso.Info cat = CategoriaCurso.de(req == null ? null : req.categoria());
         if (cat == null) throw new DatosInvalidosException("Selecciona una categoría.");
         return cat;
     }
 
-    /**
-     * Busca el curso indicado por su id. Si no encuentra el registro, responde con error 404.
-     */
     private Curso buscar(Long id) {
         return cursoRepository.findById(id)
                 .filter(c -> "Activo".equals(c.getEstado()))

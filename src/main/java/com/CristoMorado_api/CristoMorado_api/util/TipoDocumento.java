@@ -4,14 +4,6 @@ import com.CristoMorado_api.CristoMorado_api.exception.DatosInvalidosException;
 
 import java.util.List;
 
-/**
- * Tipos de documento de identidad aceptados para alumnos, docentes, padres y personal.
- *   DNI        -> 8 dígitos
- *   CE         -> carné de extranjería: 9 a 12 números o letras
- *   PASAPORTE  -> 6 a 12 números o letras
- *   OTRO       -> otro documento (PTP, cédula, etc.): 6 a 15 números o letras
- * El usuario se arma igual para todos: PREFIJO + número (ALU, DOC, APO o DIR).
- */
 public final class TipoDocumento {
 
     public static final String DNI = "DNI";
@@ -20,12 +12,8 @@ public final class TipoDocumento {
     public static final String OTRO = "OTRO";
     public static final List<String> TODOS = List.of(DNI, CE, PASAPORTE, OTRO);
 
-    /**
-     * Constructor de TipoDocumento.
-     */
     private TipoDocumento() {}
 
-    /** Vacío = DNI. Rechaza tipos desconocidos. */
     public static String normalizar(String tipo) {
         if (tipo == null || tipo.isBlank()) return DNI;
         String t = tipo.trim().toUpperCase();
@@ -36,7 +24,6 @@ public final class TipoDocumento {
         return t;
     }
 
-    /** Valida el número según el tipo y lo devuelve limpio (sin espacios, en mayúsculas). */
     public static String validarNumero(String tipo, String numero) {
         String t = normalizar(tipo);
         String n = UsuarioFormato.limpiarDni(numero);

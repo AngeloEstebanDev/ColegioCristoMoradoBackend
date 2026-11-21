@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.nio.charset.StandardCharsets;
 
-/** Descarga de archivos del aula virtual (materiales, actividades y entregas). */
 @RestController
 @RequestMapping("/api/archivos")
 @CrossOrigin(origins = "${app.cors.origenes}", exposedHeaders = HttpHeaders.CONTENT_DISPOSITION)
@@ -18,18 +17,10 @@ public class ArchivoController {
 
     private final ArchivoService archivoService;
 
-    /**
-     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
-     */
     public ArchivoController(ArchivoService archivoService) {
         this.archivoService = archivoService;
     }
 
-    /**
-     * Endpoint GET /api/archivos/{id} — Descarga la subida y descarga de archivos. La lógica está en
-     * archivoService.descargar(). Sabe quién hace la petición por la cabecera X-Usuario-Id que envía
-     * el frontend.
-     */
     @GetMapping("/{id}")
     public ResponseEntity<byte[]> descargar(@PathVariable Long id,
                                            @RequestHeader(value = "X-Usuario-Id", required = false) Long usuarioId) {

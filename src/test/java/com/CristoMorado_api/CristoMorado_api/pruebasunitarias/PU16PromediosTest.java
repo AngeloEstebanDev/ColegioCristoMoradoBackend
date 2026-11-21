@@ -9,26 +9,17 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** PU-16 – HU-19: Cálculo de promedios (Épica 5, Sprint 5). Calificacion.ponderado (pesos de cada evaluación). */
 @DisplayName("PU-16 – HU-19: Cálculo de promedios")
 class PU16PromediosTest {
 
-    /**
-     * Caso de prueba: PU-16.1 Notas 15 y 12 con pesos 30 % y 70 %: el promedio es 12,9. Prepara los
-     * datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
-     */
     @Test
     @DisplayName("PU-16.1 Notas 15 y 12 con pesos 30 % y 70 %: el promedio es 12,9")
     void c1_promedioPonderado() {
         Double promedio = Calificacion.ponderado(List.of(new Ponderada(15, 30), new Ponderada(12, 70)));
 
-        assertEquals(12.9, promedio, 0.001);    // 15 × 0,30 + 12 × 0,70 = 4,5 + 8,4
+        assertEquals(12.9, promedio, 0.001);
     }
 
-    /**
-     * Caso de prueba: PU-16.2 Notas iguales: el promedio es ese mismo valor. Prepara los datos
-     * (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
-     */
     @Test
     @DisplayName("PU-16.2 Notas iguales: el promedio es ese mismo valor")
     void c2_notasIguales() {
@@ -36,11 +27,6 @@ class PU16PromediosTest {
         assertEquals(14.0, Calificacion.simple(List.of(14.0, 14.0, 14.0)), 0.001);
     }
 
-    /**
-     * Caso de prueba: PU-16.3 Lista vacía de notas: no produce un resultado inválido (devuelve vacío /
-     * null). Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado esperado
-     * (assert).
-     */
     @Test
     @DisplayName("PU-16.3 Lista vacía de notas: no produce un resultado inválido (devuelve vacío / null)")
     void c3_listaVacia() {

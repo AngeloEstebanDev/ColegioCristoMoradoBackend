@@ -20,12 +20,6 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-/**
- * PU-04 – HU-33: Cambio de contraseña (Épica 1, Sprint 1).
- * VerificacionService.cambiarPassword exige la contraseña actual correcta y el código de 6 dígitos del Gmail.
- * El caso PU-04.2 (nueva contraseña y su confirmación diferentes) lo valida el formulario del frontend:
- * ver CristoMorado-frontend/src/app/pruebas-unitarias/pu04-confirmacion.spec.ts (Vitest).
- */
 @DisplayName("PU-04 – HU-33: Cambio de contraseña")
 class PU04CambioPasswordTest {
 
@@ -34,10 +28,6 @@ class PU04CambioPasswordTest {
     private VerificacionService servicio;
     private Usuario juan;
 
-    /**
-     * Se ejecuta antes de cada prueba: crea los mocks (objetos simulados con Mockito) y los datos de
-     * ejemplo. Guarda los cambios en la base de datos.
-     */
     @BeforeEach
     void setUp() throws Exception {
         codigoRepository = mock(CodigoVerificacionRepository.class);
@@ -47,26 +37,17 @@ class PU04CambioPasswordTest {
                 .correo("juan.perez@gmail.com").correoVerificado(true).build();
         when(usuarioRepository.findById(30L)).thenReturn(Optional.of(juan));
         when(codigoRepository.save(any(CodigoVerificacion.class))).thenAnswer(inv -> inv.getArgument(0));
-        // Código "482915" enviado al Gmail, vigente 5 minutos más (se guarda solo su hash SHA-256).
         CodigoVerificacion c = CodigoVerificacion.builder().id(1L).usuarioId(30L).tipo(CodigoVerificacion.CAMBIO_PASSWORD)
                 .codigoHash(hash("482915", 30L)).expiraEn(LocalDateTime.now().plusMinutes(5)).intentos(0).usado(false).build();
         when(codigoRepository.findTopByUsuarioIdAndTipoAndUsadoFalseOrderByFechaCreacionDesc(30L,
                 CodigoVerificacion.CAMBIO_PASSWORD)).thenReturn(Optional.of(c));
     }
 
-    /**
-     * Devuelve hash (como texto).
-     */
     private static String hash(String codigo, Long usuarioId) throws Exception {
         MessageDigest md = MessageDigest.getInstance("SHA-256");
         return HexFormat.of().formatHex(md.digest((codigo + ":" + usuarioId).getBytes(StandardCharsets.UTF_8)));
     }
 
-    /**
-     * Caso de prueba: PU-04.1 Contraseña actual incorrecta: el cambio se rechaza. Prepara los datos
-     * (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert). Guarda los
-     * cambios en la base de datos.
-     */
     @Test
     @DisplayName("PU-04.1 Contraseña actual incorrecta: el cambio se rechaza")
     void c1_actualIncorrecta() {
@@ -78,11 +59,6 @@ class PU04CambioPasswordTest {
         verify(usuarioRepository, never()).save(any(Usuario.class));
     }
 
-    /**
-     * Caso de prueba: PU-04.3 Datos válidos (actual correcta, nueva válida y código correcto): el
-     * cambio se completa. Prepara los datos (arrange), ejecuta el método (act) y comprueba el
-     * resultado esperado (assert). Guarda los cambios en la base de datos.
-     */
     @Test
     @DisplayName("PU-04.3 Datos válidos (actual correcta, nueva válida y código correcto): el cambio se completa")
     void c3_cambioCorrecto() {

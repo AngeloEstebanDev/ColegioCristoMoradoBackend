@@ -16,24 +16,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-/**
- * Servicio de los docentes. Aquí está la lógica de negocio: valida los datos, aplica las reglas del
- * colegio y usa los repositorios para leer o guardar en la base de datos. Los controladores llaman a
- * estos métodos.
- */
 @Service
 public class DocenteService {
 
-    /** Rol con el que se crean las cuentas de docente en `usuarios`. */
     public static final String ROL_DOCENTE = "DOCENTE";
 
     private final DocenteRepository docenteRepository;
     private final UsuarioRepository usuarioRepository;
     private final CuentaService cuentaService;
 
-    /**
-     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
-     */
     public DocenteService(DocenteRepository docenteRepository, UsuarioRepository usuarioRepository,
                           CuentaService cuentaService) {
         this.docenteRepository = docenteRepository;
@@ -41,9 +32,6 @@ public class DocenteService {
         this.cuentaService = cuentaService;
     }
 
-    /**
-     * Devuelve la lista de los docentes. Solo lee datos (transacción de solo lectura).
-     */
     @Transactional(readOnly = true)
     public List<DocenteResponse> listar() {
         return docenteRepository.findAll().stream()
@@ -51,19 +39,11 @@ public class DocenteService {
                 .toList();
     }
 
-    /**
-     * Obtiene el docente indicado por su id. Solo lee datos (transacción de solo lectura).
-     */
     @Transactional(readOnly = true)
     public DocenteResponse obtener(Long id) {
         return respuesta(buscarOFallar(id));
     }
 
-    /**
-     * Crea un nuevo registro (el docente) con los datos recibidos. Se ejecuta en una transacción: si
-     * algo falla, no se guarda nada a medias. Si el dato ya existe (por ejemplo, un DNI o usuario
-     * repetido), responde con error 409. Guarda los cambios en la base de datos.
-     */
     @Transactional
     public DocenteResponse crear(DocenteRequest req) {
         String dni = TipoDocumento.validarNumero(req.tipoDocumento(), req.dni());
@@ -71,18 +51,12 @@ public class DocenteService {
             throw new RecursoDuplicadoException("Ya existe un docente con ese número de documento.");
         }
         Docente d = mapearDatos(new Docente(), req);
-        // Todo docente nuevo nace con su cuenta: usuario DOC + DNI.
         Usuario cuenta = cuentaService.crear(UsuarioFormato.DOCENTE, d.getDni(), d.getNombreCompleto(),
                 ROL_DOCENTE, req.password(), activo(d));
         d.setUsuarioId(cuenta.getId());
         return respuesta(docenteRepository.save(d));
     }
 
-    /**
-     * Actualiza los datos del docente indicado por su id. Se ejecuta en una transacción: si algo
-     * falla, no se guarda nada a medias. Si el dato ya existe (por ejemplo, un DNI o usuario
-     * repetido), responde con error 409. Guarda los cambios en la base de datos.
-     */
     @Transactional
     public DocenteResponse actualizar(Long id, DocenteRequest req) {
         Docente d = buscarOFallar(id);
@@ -94,7 +68,6 @@ public class DocenteService {
 
         Usuario cuenta = d.getUsuarioId() == null ? null : usuarioRepository.findById(d.getUsuarioId()).orElse(null);
         if (cuenta == null) {
-            // Docente antiguo sin cuenta: se le crea ahora.
             cuenta = cuentaService.crear(UsuarioFormato.DOCENTE, d.getDni(), d.getNombreCompleto(),
                     ROL_DOCENTE, req.password(), activo(d));
             d.setUsuarioId(cuenta.getId());
@@ -105,7 +78,6 @@ public class DocenteService {
         return respuesta(docenteRepository.save(d));
     }
 
-    /** Botón "Desactivar/Activar cuenta" de la tabla de Docentes. */
     @Transactional
     public DocenteResponse cambiarEstado(Long id, boolean activo) {
         Docente d = buscarOFallar(id);
@@ -121,45 +93,28 @@ public class DocenteService {
         return respuesta(docenteRepository.save(d));
     }
 
-    /**
-     * Elimina el docente indicado por su id. Se ejecuta en una transacción: si algo falla, no se
-     * guarda nada a medias. Borra registros de la base de datos.
-     */
     @Transactional
     public void eliminar(Long id) {
         Docente d = buscarOFallar(id);
         Usuario cuenta = d.getUsuarioId() == null ? null : usuarioRepository.findById(d.getUsuarioId()).orElse(null);
         docenteRepository.delete(d);
         docenteRepository.flush();
-        // Al borrar al docente también se borra su cuenta de acceso.
         cuentaService.eliminar(cuenta);
     }
 
-    /**
-     * Cuenta total.
-     */
     long contarTotal() {
         return docenteRepository.count();
     }
 
-    /**
-     * Devuelve respuesta.
-     */
     private DocenteResponse respuesta(Docente d) {
         Usuario cuenta = d.getUsuarioId() == null ? null : usuarioRepository.findById(d.getUsuarioId()).orElse(null);
         return DocenteResponse.fromEntity(d, cuenta);
     }
 
-    /**
-     * Devuelve activo (verdadero o falso).
-     */
     private static boolean activo(Docente d) {
         return !"Inactivo".equalsIgnoreCase(d.getEstado());
     }
 
-    /**
-     * Convierte datos.
-     */
     private Docente mapearDatos(Docente d, DocenteRequest req) {
         d.setNombreCompleto(UsuarioFormato.nombreCompleto(req.nombreCompleto()));
         d.setTipoDocumento(TipoDocumento.normalizar(req.tipoDocumento()));
@@ -168,7 +123,7 @@ public class DocenteService {
         d.setFechaNacimiento(Campos.fechaNacimiento(req.fechaNacimiento(), 18, 100));
         d.setGenero(Campos.opcion(req.genero(), java.util.List.of("Masculino", "Femenino"), "el género"));
         d.setTelefono(Campos.telefono(req.telefono(), false));
-        d.setCorreo(UsuarioFormato.correoOpcional(req.correo()));          // correo de contacto (no es el de inicio de sesión)
+        d.setCorreo(UsuarioFormato.correoOpcional(req.correo()));
         d.setDireccion(Campos.direccion(req.direccion()));
         d.setEspecialidad(Campos.texto(Campos.limpio(req.especialidad()), "la especialidad", 3, 100, false));
         d.setTituloProfesional(Campos.texto(Campos.limpio(req.tituloProfesional()), "el título profesional", 3, 150, false));
@@ -181,10 +136,6 @@ public class DocenteService {
         return d;
     }
 
-    /**
-     * Busca el registro por su id; si no existe, lanza RecursoNoEncontradoException (error 404). Si no
-     * encuentra el registro, responde con error 404.
-     */
     private Docente buscarOFallar(Long id) {
         return docenteRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Docente no encontrado."));

@@ -3,53 +3,36 @@ package com.CristoMorado_api.CristoMorado_api.dto;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * Mensajería en forma de chat: una conversación por persona.
- * El id de la conversación es el usuarioId del otro; 0 = "Avisos del colegio",
- * -1 = mensajes de cuentas eliminadas.
- */
 public final class ChatDto {
 
-    /**
-     * Constructor de ChatDto.
-     */
     private ChatDto() {}
 
     public static final long AVISOS = 0L;
     public static final long ELIMINADO = -1L;
 
-    /** Fila de la lista de chats. */
     public record Conversacion(
             Long id,
             String nombre,
             String rol,
             String detalle,
-            String ultimoMensaje,     // texto plano, recortado
+            String ultimoMensaje,
             Boolean ultimoEsMio,
             LocalDateTime fecha,
             Long noLeidos,
             Boolean puedeEscribir
     ) {}
 
-    /** Burbuja del chat. */
     public record MensajeChat(
             Long id,
-            String asunto,            // null en mensajes de chat; título en avisos y mensajes antiguos
-            String contenido,         // HTML simple
+            String asunto,
+            String contenido,
             LocalDateTime fecha,
             Boolean mio,
-            Boolean leido,            // si es mío: si el otro ya lo vio
+            Boolean leido,
             Boolean aviso
     ) {}
 
-    /**
-     * Estructura de datos Chat (record): agrupa chat en un solo objeto inmutable que viaja como JSON.
-     */
     public record Chat(Conversacion conversacion, List<MensajeChat> mensajes) {}
 
-    /**
-     * Estructura de datos EnviarRequest (record): agrupa enviar request en un solo objeto inmutable
-     * que viaja como JSON.
-     */
     public record EnviarRequest(String contenido) {}
 }

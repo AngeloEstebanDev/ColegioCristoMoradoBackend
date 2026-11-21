@@ -18,11 +18,6 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-/**
- * PU-01 – HU-01: Autenticación de usuarios (Épica 1, Sprint 1).
- * Prueba unitaria del método AuthController.login con la base de datos simulada (Mockito):
- * no se levanta el servidor ni PostgreSQL.
- */
 @DisplayName("PU-01 – HU-01: Autenticación de usuarios")
 class PU01AutenticacionTest {
 
@@ -30,10 +25,6 @@ class PU01AutenticacionTest {
     private PermisoService permisoService;
     private AuthController controller;
 
-    /**
-     * Se ejecuta antes de cada prueba: crea los mocks (objetos simulados con Mockito) y los datos de
-     * ejemplo.
-     */
     @BeforeEach
     void setUp() {
         usuarioRepository = mock(UsuarioRepository.class);
@@ -45,18 +36,11 @@ class PU01AutenticacionTest {
         when(permisoService.permisosDe(juan)).thenReturn(List.of());
     }
 
-    /**
-     * Devuelve error (como mapa clave → valor).
-     */
     @SuppressWarnings("unchecked")
     private static Map<String, String> error(ResponseEntity<?> r) {
         return (Map<String, String>) r.getBody();
     }
 
-    /**
-     * Caso de prueba: PU-01.1 Credenciales correctas: autenticación exitosa (200). Prepara los datos
-     * (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
-     */
     @Test
     @DisplayName("PU-01.1 Credenciales correctas: autenticación exitosa (200)")
     void c1_credencialesCorrectas() {
@@ -68,10 +52,6 @@ class PU01AutenticacionTest {
         assertEquals("ALUMNO", u.rol());
     }
 
-    /**
-     * Caso de prueba: PU-01.2 Contraseña incorrecta: autenticación fallida (401). Prepara los datos
-     * (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
-     */
     @Test
     @DisplayName("PU-01.2 Contraseña incorrecta: autenticación fallida (401)")
     void c2_passwordIncorrecta() {
@@ -82,11 +62,6 @@ class PU01AutenticacionTest {
         assertEquals("password", error(r).get("campo"));
     }
 
-    /**
-     * Caso de prueba: PU-01.3 Campos vacíos: se rechazan los datos (400) sin consultar la base de
-     * datos. Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado esperado
-     * (assert).
-     */
     @Test
     @DisplayName("PU-01.3 Campos vacíos: se rechazan los datos (400) sin consultar la base de datos")
     void c3_camposVacios() {

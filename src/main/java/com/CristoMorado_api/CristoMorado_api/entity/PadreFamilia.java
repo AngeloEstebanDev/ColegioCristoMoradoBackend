@@ -8,12 +8,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Entidad PadreFamilia: representa la tabla «padres_familia» de la base de datos (los padres de
- * familia o apoderados). Cada atributo es una columna y cada objeto es una fila. Hibernate (JPA) se
- * encarga de leer y guardar estos datos. Lombok genera los getters, setters y el builder para no
- * escribirlos a mano.
- */
 @Entity
 @Table(name = "padres_familia")
 @Getter
@@ -30,7 +24,6 @@ public class PadreFamilia {
     @Column(name = "nombre_completo", nullable = false, length = 150)
     private String nombreCompleto;
 
-    /** DNI, CE (carné de extranjería), PASAPORTE u OTRO. El número va en "dni". */
     @Column(name = "tipo_documento", nullable = false, length = 10)
     @Builder.Default
     private String tipoDocumento = "DNI";
@@ -58,7 +51,6 @@ public class PadreFamilia {
     @Builder.Default
     private LocalDateTime fechaRegistro = LocalDateTime.now();
 
-    /** Cuenta de acceso del padre/apoderado (usuario APO + DNI). */
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id", unique = true)
     private Usuario usuario;

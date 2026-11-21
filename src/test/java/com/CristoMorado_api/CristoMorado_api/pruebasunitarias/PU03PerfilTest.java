@@ -17,10 +17,6 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-/**
- * PU-03 – HU-32: Gestión del perfil (Épica 1, Sprint 1).
- * PerfilService.actualizar valida los datos de "Mi perfil" antes de guardarlos.
- */
 @DisplayName("PU-03 – HU-32: Gestión del perfil")
 class PU03PerfilTest {
 
@@ -29,10 +25,6 @@ class PU03PerfilTest {
     private PerfilService servicio;
     private Docente carlos;
 
-    /**
-     * Se ejecuta antes de cada prueba: crea los mocks (objetos simulados con Mockito) y los datos de
-     * ejemplo. Guarda los cambios en la base de datos.
-     */
     @BeforeEach
     void setUp() {
         usuarioRepository = mock(UsuarioRepository.class);
@@ -40,9 +32,6 @@ class PU03PerfilTest {
         PadreFamiliaRepository padreRepository = mock(PadreFamiliaRepository.class);
         PersonalRepository personalRepository = mock(PersonalRepository.class);
         servicio = new PerfilService(usuarioRepository, docenteRepository, mock(EstudianteRepository.class),
-                /**
-                 * Crea un objeto simulado (mock) con Mockito para usarlo en la prueba.
-                 */
                 padreRepository, mock(VerificacionService.class), personalRepository, mock(PermisoService.class));
         Usuario cuenta = Usuario.builder().id(7L).usuario("DOC45678912").nombre("Carlos Mendoza Ruiz")
                 .rol("DOCENTE").estado(true).build();
@@ -55,19 +44,11 @@ class PU03PerfilTest {
         when(personalRepository.findByUsuarioId(7L)).thenReturn(Optional.empty());
     }
 
-    /**
-     * Devuelve perfil.
-     */
     private static PerfilUpdateRequest perfil(String nombre, String telefono, String correo) {
         return new PerfilUpdateRequest(nombre, null, null, null, telefono, "Av. Los Olivos 123", null, null, correo,
                 null, null, null, null, null);
     }
 
-    /**
-     * Caso de prueba: PU-03.1 Datos válidos: la validación los acepta y se guardan. Prepara los datos
-     * (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert). Guarda los
-     * cambios en la base de datos.
-     */
     @Test
     @DisplayName("PU-03.1 Datos válidos: la validación los acepta y se guardan")
     void c1_datosValidos() {
@@ -78,11 +59,6 @@ class PU03PerfilTest {
         verify(docenteRepository, times(1)).save(carlos);
     }
 
-    /**
-     * Caso de prueba: PU-03.2 Correo con formato incorrecto: se rechaza. Prepara los datos (arrange),
-     * ejecuta el método (act) y comprueba el resultado esperado (assert). Guarda los cambios en la
-     * base de datos.
-     */
     @Test
     @DisplayName("PU-03.2 Correo con formato incorrecto: se rechaza")
     void c2_correoIncorrecto() {
@@ -93,11 +69,6 @@ class PU03PerfilTest {
         verify(docenteRepository, never()).save(any(Docente.class));
     }
 
-    /**
-     * Caso de prueba: PU-03.3 Campo obligatorio vacío (nombre): error de validación. Prepara los datos
-     * (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert). Guarda los
-     * cambios en la base de datos.
-     */
     @Test
     @DisplayName("PU-03.3 Campo obligatorio vacío (nombre): error de validación")
     void c3_campoObligatorioVacio() {

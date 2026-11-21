@@ -11,11 +11,6 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Antes de borrar una cuenta de `usuarios` hay que soltar las filas que
- * la referencian (comunicados, lecturas, mensajes); si no, PostgreSQL
- * rechaza el borrado por las llaves foráneas.
- */
 @Service
 public class LimpiezaUsuarioService {
 
@@ -32,9 +27,6 @@ public class LimpiezaUsuarioService {
     private final EntregaRepository entregaRepository;
     private final ArchivoAdjuntoRepository archivoRepository;
 
-    /**
-     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
-     */
     public LimpiezaUsuarioService(ComunicadoRepository comunicadoRepository,
                                   ComunicadoLecturaRepository lecturaRepository,
                                   MensajeRepository mensajeRepository,
@@ -61,26 +53,19 @@ public class LimpiezaUsuarioService {
         this.archivoRepository = archivoRepository;
     }
 
-    /**
-     * Libera referencias. Se ejecuta en una transacción: si algo falla, no se guarda nada a medias.
-     */
     @Transactional
     public void liberarReferencias(Long usuarioId) {
-        comunicadoRepository.desvincularAutor(usuarioId);       // el comunicado se conserva
+        comunicadoRepository.desvincularAutor(usuarioId);
         lecturaRepository.eliminarPorUsuario(usuarioId);
         destinatarioRepository.eliminarPorDestinatario(usuarioId);
-        mensajeRepository.desvincularRemitente(usuarioId);      // queda como "Usuario eliminado"
-        borradorRepository.eliminarPorUsuario(usuarioId);        // sus borradores
-        borradorRepository.desvincularDestinatario(usuarioId);   // borradores de otros dirigidos a él
+        mensajeRepository.desvincularRemitente(usuarioId);
+        borradorRepository.eliminarPorUsuario(usuarioId);
+        borradorRepository.desvincularDestinatario(usuarioId);
         codigoRepository.eliminarPorUsuario(usuarioId);
-        citaRepository.eliminarPorUsuario(usuarioId);              // Mi Agenda
+        citaRepository.eliminarPorUsuario(usuarioId);
         disponibilidadRepository.eliminarPorUsuario(usuarioId);
     }
 
-    /**
-     * Antes de borrar a un alumno: sus notas, entregas (con sus archivos) y asistencias
-     * se borran; sus citas se conservan sin el alumno.
-     */
     @Transactional
     public void liberarEstudiante(Long estudianteId) {
         notaRepository.eliminarPorEstudiante(estudianteId);

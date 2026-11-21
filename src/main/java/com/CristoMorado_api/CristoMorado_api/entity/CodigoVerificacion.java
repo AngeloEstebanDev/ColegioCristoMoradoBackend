@@ -5,13 +5,6 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-/**
- * Código de 6 dígitos enviado al Gmail del usuario para:
- * - VINCULAR_CORREO: confirmar que el Gmail es suyo.
- * - CAMBIO_PASSWORD: cambiar la contraseña desde Configuración.
- * - RECUPERAR_PASSWORD: restablecerla desde el login ("¿Olvidaste tu contraseña?").
- * Solo se guarda el hash del código, nunca el código en texto plano.
- */
 @Entity
 @Table(name = "codigos_verificacion")
 @Getter
@@ -35,7 +28,6 @@ public class CodigoVerificacion {
     @Column(nullable = false, length = 30)
     private String tipo;
 
-    /** Correo al que se envió el código. */
     @Column(nullable = false, length = 150)
     private String correo;
 

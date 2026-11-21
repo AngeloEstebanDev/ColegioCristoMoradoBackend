@@ -5,7 +5,6 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-/** Mensaje que el usuario guardó sin enviar (bandeja "Borradores"). Solo lo ve su autor. */
 @Entity
 @Table(name = "mensaje_borradores")
 @Getter
@@ -23,7 +22,6 @@ public class MensajeBorrador {
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
 
-    /** Puede quedar vacío si aún no eligió a quién escribir. */
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "destinatario_id")
     private Usuario destinatario;
@@ -36,7 +34,6 @@ public class MensajeBorrador {
     @Builder.Default
     private String contenido = "";
 
-    /** Id del mensaje al que responde (opcional). */
     @Column(name = "respuesta_a_id")
     private Long respuestaAId;
 

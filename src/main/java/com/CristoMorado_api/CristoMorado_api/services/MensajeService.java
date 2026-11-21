@@ -20,25 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.*;
 
-/**
- * Mensajería interna. Reglas de quién puede escribir a quién:
- * - Administración: a cualquier usuario activo.
- * - Docente: a la administración/directiva, a los docentes, a los alumnos de las secciones
- *   donde enseña y a los padres de esos alumnos.
- * - Alumno: a los compañeros de SU salón (mismo grado y sección)
- *   y a los docentes.
- * - Padre: a los docentes y a administración.
- * Además, cualquiera puede RESPONDER a quien le escribió.
- *
- * La vista es de chat: una conversación por persona (ver {@link ChatDto}).
- * Los avisos automáticos del colegio (p. ej. cambio de horario) llegan en
- * la conversación "Avisos del colegio".
- */
 @Service
 public class MensajeService {
 
     private static final int MAX_CHAT = 2000;
-    /** Asunto interno de los mensajes de chat (no se muestra). */
     public static final String ASUNTO_CHAT = "Chat";
     public static final String NOMBRE_AVISOS = "Avisos del colegio";
 
@@ -50,9 +35,6 @@ public class MensajeService {
     private final DocenteRepository docenteRepository;
     private final SeccionCursoRepository seccionCursoRepository;
 
-    /**
-     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
-     */
     public MensajeService(MensajeRepository mensajeRepository,
                           MensajeDestinatarioRepository destinatarioRepository,
                           UsuarioRepository usuarioRepository,
@@ -69,23 +51,13 @@ public class MensajeService {
         this.docenteRepository = docenteRepository;
     }
 
-    // ------------------------------------------------------------------
-    // Contactos
-    // ------------------------------------------------------------------
-
-    /**
-     * Devuelve contactos. Solo lee datos (transacción de solo lectura).
-     */
     @Transactional(readOnly = true)
     public ContactosResponse contactos(Long usuarioId) {
         Usuario yo = buscarUsuario(usuarioId);
         Categoria miCategoria = RolUtil.categoria(yo.getRol());
 
-        // usuarioId -> "5° A" (alumnos) y usuarioId -> especialidad (docentes)
         Map<Long, String> salonPorUsuario = new HashMap<>();
-        // usuarioId del padre -> salones de sus hijos
         Map<Long, Set<String>> salonesDePadre = new HashMap<>();
-        // usuarioId del padre -> "Padre de Juan Pérez García" (se muestra en letra pequeña bajo su nombre)
         Map<Long, String> hijosDePadre = hijosDePadres();
         for (Estudiante e : estudianteRepository.findAll()) {
             if (e.getUsuario() != null) {
@@ -99,7 +71,6 @@ public class MensajeService {
                 }
             }
         }
-        // Salones donde enseña el docente
         Set<String> misSalones = new HashSet<>();
         if (miCategoria == Categoria.DOCENTE) {
             for (SeccionCurso sc : seccionCursoRepository.findByDocenteUsuarioId(yo.getId())) {
@@ -114,8 +85,6 @@ public class MensajeService {
         }
         String miSalon = salonPorUsuario.get(yo.getId());
 
-        // Padre: solo escribe a los docentes que enseñan (o son tutores) en los salones de sus hijos.
-        // usuarioId del docente -> "Matemática · 3° Secundaria A" (se muestra bajo su nombre).
         Map<Long, Set<String>> docentesDeMisHijos = new LinkedHashMap<>();
         if (miCategoria == Categoria.PADRE) {
             Set<String> salonesHijos = salonesDePadre.getOrDefault(yo.getId(), Set.of());
@@ -153,33 +122,23 @@ public class MensajeService {
             contactos.add(new Contacto(u.getId(), u.getNombre(), RolUtil.etiqueta(u.getRol()), detalle));
         }
 
-        // Ya no se envían mensajes por grupos: el chat es siempre de persona a persona.
         return new ContactosResponse(contactos, List.of());
     }
 
-    /**
-     * Indica si puede escribir a (devuelve verdadero o falso).
-     */
     private boolean puedeEscribirA(Categoria yo, String miSalon, Set<String> misSalones, Categoria otro,
                                    String salonOtro, Set<String> salonesHijosOtro) {
         return switch (yo) {
             case ADMINISTRATIVO -> true;
-            // El docente escribe a la directiva/administración, a otros docentes y a sus alumnos.
-            // (A un padre solo puede responderle si el padre le escribió primero.)
             case DOCENTE -> otro == Categoria.ADMINISTRATIVO
                     || otro == Categoria.DOCENTE
                     || (otro == Categoria.ALUMNO && salonOtro != null && misSalones.contains(salonOtro));
-            // El alumno escribe a sus profesores y a los compañeros de su salón
-            // (a la administración solo puede responderle si ella le escribió primero).
             case ALUMNO -> otro == Categoria.DOCENTE
                     || (otro == Categoria.ALUMNO && miSalon != null && miSalon.equals(salonOtro));
-            // El padre escribe a la administración y a los docentes de sus hijos (filtrados antes).
             case PADRE -> otro == Categoria.ADMINISTRATIVO || otro == Categoria.DOCENTE;
             default -> otro == Categoria.ADMINISTRATIVO;
         };
     }
 
-    /** usuarioId del padre -> "Padre de Juan Pérez García, Madre de ..." según sus vínculos. */
     private Map<Long, String> hijosDePadres() {
         Map<Long, List<String>> mapa = new HashMap<>();
         for (Estudiante e : estudianteRepository.findAll()) {
@@ -196,21 +155,11 @@ public class MensajeService {
         return res;
     }
 
-    /**
-     * Devuelve salon (como texto).
-     */
     private static String salon(Estudiante e) {
-        if (e.getGrado() == null || e.getSeccion() == null) return null;   // sin matrícula
+        if (e.getGrado() == null || e.getSeccion() == null) return null;
         return e.getGrado() + " " + e.getSeccion();
     }
 
-    // ------------------------------------------------------------------
-    // Bandejas
-    // ------------------------------------------------------------------
-
-    /**
-     * Devuelve recibidos (como lista). Solo lee datos (transacción de solo lectura).
-     */
     @Transactional(readOnly = true)
     public List<MensajeResponse> recibidos(Long usuarioId) {
         buscarUsuario(usuarioId);
@@ -219,10 +168,6 @@ public class MensajeService {
                 .toList();
     }
 
-    /**
-     * Avisos del colegio (cambios de horario, nuevas actividades, notas, citas...) que el usuario
-     * aún no leyó, del más reciente al más antiguo (máximo 20). Se muestran en el modal al entrar.
-     */
     @Transactional(readOnly = true)
     public List<MensajeResponse> avisosPendientes(Long usuarioId) {
         buscarUsuario(usuarioId);
@@ -233,7 +178,6 @@ public class MensajeService {
                 .toList();
     }
 
-    /** Marca como leídos varios avisos del usuario (los que no son suyos se ignoran). */
     @Transactional
     public void marcarAvisosLeidos(Long usuarioId, List<Long> mensajeIds) {
         buscarUsuario(usuarioId);
@@ -250,9 +194,6 @@ public class MensajeService {
         }
     }
 
-    /**
-     * Devuelve enviados (como lista). Solo lee datos (transacción de solo lectura).
-     */
     @Transactional(readOnly = true)
     public List<MensajeResponse> enviados(Long usuarioId) {
         buscarUsuario(usuarioId);
@@ -261,12 +202,6 @@ public class MensajeService {
                 .toList();
     }
 
-    /**
-     * Envía los mensajes internos. Se ejecuta en una transacción: si algo falla, no se guarda nada a
-     * medias. Si no encuentra el registro, responde con error 404. Si los datos no son válidos,
-     * responde con error 400 y un mensaje claro para el usuario. Si el usuario no tiene permiso para
-     * esta acción, responde con error 403. Guarda los cambios en la base de datos.
-     */
     @Transactional
     public MensajeResponse enviar(Long usuarioId, MensajeRequest req) {
         Usuario yo = buscarUsuario(usuarioId);
@@ -294,7 +229,6 @@ public class MensajeService {
             throw new DatosInvalidosException("Los mensajes son de persona a persona: elige un solo destinatario.");
         }
 
-        // A quién puedo escribir: mis contactos + (si respondo) quien me escribió
         Set<Long> permitidos = new HashSet<>();
         contactos(usuarioId).contactos().forEach(c -> permitidos.add(c.usuarioId()));
         if (req.respuestaAId() != null) {
@@ -334,13 +268,6 @@ public class MensajeService {
         return respuesta(mensajeRepository.save(m), "ENVIADO", true);
     }
 
-    // ------------------------------------------------------------------
-    // Borradores (solo los ve su autor; no llegan a nadie hasta enviarlos)
-    // ------------------------------------------------------------------
-
-    /**
-     * Devuelve borradores (como lista). Solo lee datos (transacción de solo lectura).
-     */
     @Transactional(readOnly = true)
     public List<BorradorDto.Borrador> borradores(Long usuarioId) {
         buscarUsuario(usuarioId);
@@ -348,11 +275,6 @@ public class MensajeService {
                 .map(MensajeService::borrador).toList();
     }
 
-    /**
-     * Guarda borrador. Se ejecuta en una transacción: si algo falla, no se guarda nada a medias. Si no
-     * encuentra el registro, responde con error 404. Si los datos no son válidos, responde con error
-     * 400 y un mensaje claro para el usuario. Guarda los cambios en la base de datos.
-     */
     @Transactional
     public BorradorDto.Borrador guardarBorrador(Long usuarioId, BorradorDto.Request req) {
         Usuario yo = buscarUsuario(usuarioId);
@@ -380,19 +302,12 @@ public class MensajeService {
         return borrador(borradorRepository.save(b));
     }
 
-    /**
-     * Elimina borrador. Se ejecuta en una transacción: si algo falla, no se guarda nada a medias. Si
-     * no encuentra el registro, responde con error 404. Borra registros de la base de datos.
-     */
     @Transactional
     public void eliminarBorrador(Long usuarioId, Long id) {
         borradorRepository.delete(borradorRepository.findByIdAndUsuarioId(id, usuarioId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Borrador no encontrado.")));
     }
 
-    /**
-     * Devuelve borrador.
-     */
     private static BorradorDto.Borrador borrador(MensajeBorrador b) {
         Usuario d = b.getDestinatario();
         return new BorradorDto.Borrador(b.getId(), d == null ? null : d.getId(), d == null ? null : d.getNombre(),
@@ -400,10 +315,6 @@ public class MensajeService {
                 b.getFechaActualizacion());
     }
 
-    /**
-     * Marca leido. Se ejecuta en una transacción: si algo falla, no se guarda nada a medias. Si no
-     * encuentra el registro, responde con error 404. Guarda los cambios en la base de datos.
-     */
     @Transactional
     public void marcarLeido(Long mensajeId, Long usuarioId) {
         MensajeDestinatario d = destinatarioRepository.findByMensajeIdAndDestinatarioId(mensajeId, usuarioId)
@@ -415,10 +326,6 @@ public class MensajeService {
         }
     }
 
-    /**
-     * Quita el mensaje de la bandeja del usuario (no de la de los demás).
-     * Cuando ya nadie lo tiene en su bandeja, se borra de la base de datos.
-     */
     @Transactional
     public void eliminar(Long mensajeId, Long usuarioId) {
         Mensaje m = mensajeRepository.findById(mensajeId)
@@ -448,20 +355,11 @@ public class MensajeService {
         }
     }
 
-    /**
-     * Cuenta no leidos. Solo lee datos (transacción de solo lectura).
-     */
     @Transactional(readOnly = true)
     public long contarNoLeidos(Long usuarioId) {
         return destinatarioRepository.countByDestinatarioIdAndLeidoFalseAndEliminadoFalse(usuarioId);
     }
 
-
-    // ------------------------------------------------------------------
-    // Chat: una conversación por persona
-    // ------------------------------------------------------------------
-
-    /** Lista de chats del usuario, el más reciente primero. */
     @Transactional(readOnly = true)
     public List<ChatDto.Conversacion> conversaciones(Long usuarioId) {
         buscarUsuario(usuarioId);
@@ -488,7 +386,6 @@ public class MensajeService {
         return lista;
     }
 
-    /** Mensajes con una persona (o los avisos del colegio). Marca como leído lo recibido. */
     @Transactional
     public ChatDto.Chat conversacion(Long usuarioId, Long otroId) {
         buscarUsuario(usuarioId);
@@ -527,7 +424,6 @@ public class MensajeService {
         return new ChatDto.Chat(cabecera(otroId, otro, contexto(usuarioId), ultimo, ultimoEsMio, 0, meEscribio), mensajes);
     }
 
-    /** Envía un mensaje de chat (texto plano) a una persona. */
     @Transactional
     public ChatDto.MensajeChat enviarChat(Long usuarioId, Long otroId, ChatDto.EnviarRequest req) {
         if (otroId == null || otroId <= 0) {
@@ -538,7 +434,6 @@ public class MensajeService {
         if (texto.length() > MAX_CHAT) {
             throw new DatosInvalidosException("El mensaje no puede superar los " + MAX_CHAT + " caracteres.");
         }
-        // Si el otro me escribió antes, puedo contestarle aunque no esté en mis contactos.
         Long ultimoRecibido = destinatarioRepository.recibidosPor(usuarioId).stream()
                 .map(MensajeDestinatario::getMensaje)
                 .filter(m -> otroId.equals(otroDe(m)))
@@ -548,7 +443,6 @@ public class MensajeService {
         return new ChatDto.MensajeChat(r.id(), null, r.contenido(), r.fechaEnvio(), true, false, false);
     }
 
-    /** Quita toda la conversación de MI lista (el otro la conserva). */
     @Transactional
     public void eliminarConversacion(Long usuarioId, Long otroId) {
         ChatDto.Chat chat = conversacion(usuarioId, otroId);
@@ -556,10 +450,6 @@ public class MensajeService {
         chat.mensajes().forEach(m -> eliminar(m.id(), usuarioId));
     }
 
-    /**
-     * Aviso automático del colegio a varios usuarios (sin remitente).
-     * Lo usa, por ejemplo, el editor de horario cuando se guarda un cambio.
-     */
     @Transactional
     public int enviarAviso(Collection<Usuario> destinos, String asunto, String contenidoHtml) {
         Mensaje m = Mensaje.builder()
@@ -579,27 +469,19 @@ public class MensajeService {
         return m.getDestinatarios().size();
     }
 
-    /** Escapa HTML y convierte saltos de línea en &lt;br&gt;. */
     public static String escapar(String texto) {
         return texto.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
     }
 
-    /**
-     * Convierte los datos a html.
-     */
     private static String aHtml(String texto) {
         return escapar(texto).replace("\r\n", "\n").replace("\n", "<br>");
     }
 
-    /** Con quién es la conversación de un mensaje RECIBIDO. */
     private static Long otroDe(Mensaje m) {
         if (Boolean.TRUE.equals(m.getAvisoSistema())) return ChatDto.AVISOS;
         return m.getRemitente() == null ? ChatDto.ELIMINADO : m.getRemitente().getId();
     }
 
-    /**
-     * Tipo auxiliar Acumulado: acumulado.
-     */
     private static class Acumulado {
         Mensaje ultimo;
         boolean ultimoEsMio;
@@ -607,9 +489,6 @@ public class MensajeService {
         long noLeidos;
         boolean meEscribio;
 
-        /**
-         * Agrega un nuevo registro (el mensaje) con los datos recibidos.
-         */
         void agregar(Mensaje m, boolean mio, Usuario otro) {
             if (otro != null) usuario = otro;
             if (ultimo == null || m.getFechaEnvio().isAfter(ultimo.getFechaEnvio())
@@ -620,16 +499,12 @@ public class MensajeService {
         }
     }
 
-    /** Mis contactos por usuarioId (para rol/detalle y saber si puedo escribir). */
     private Map<Long, Contacto> contexto(Long usuarioId) {
         Map<Long, Contacto> mapa = new HashMap<>();
         contactos(usuarioId).contactos().forEach(c -> mapa.put(c.usuarioId(), c));
         return mapa;
     }
 
-    /**
-     * Devuelve cabecera.
-     */
     private ChatDto.Conversacion cabecera(Long otroId, Usuario otro, Map<Long, Contacto> ctx, Mensaje ultimo,
                                           boolean ultimoEsMio, long noLeidos, boolean meEscribio) {
         String resumen = ultimo == null ? "" : resumen(ultimo);
@@ -643,7 +518,6 @@ public class MensajeService {
                     resumen, ultimoEsMio, fecha, noLeidos, false);
         }
         Contacto c = ctx.get(otroId);
-        // Puedo escribirle si es mi contacto o si alguna vez me escribió (para responder).
         boolean puede = Boolean.TRUE.equals(otro.getEstado()) && (c != null || meEscribio);
         String detalle = c != null ? c.detalle()
                 : RolUtil.categoria(otro.getRol()) == Categoria.PADRE ? hijosDePadres().getOrDefault(otroId, "") : "";
@@ -651,9 +525,6 @@ public class MensajeService {
                 detalle, resumen, ultimoEsMio, fecha, noLeidos, puede);
     }
 
-    /**
-     * Devuelve burbuja.
-     */
     private ChatDto.MensajeChat burbuja(Mensaje m, boolean mio, boolean leido) {
         String asunto = m.getAsunto();
         if (asunto == null || asunto.isBlank() || ASUNTO_CHAT.equals(asunto) || "(Sin asunto)".equals(asunto)) asunto = null;
@@ -661,7 +532,6 @@ public class MensajeService {
                 Boolean.TRUE.equals(m.getAvisoSistema()));
     }
 
-    /** Texto plano corto para la lista de chats. */
     private static String resumen(Mensaje m) {
         String texto = (m.getContenido() == null ? "" : m.getContenido())
                 .replaceAll("(?i)<br\\s*/?>|</p>", " ")
@@ -674,18 +544,10 @@ public class MensajeService {
         return texto.length() > 90 ? texto.substring(0, 89).strip() + "…" : texto;
     }
 
-    // ------------------------------------------------------------------
-
-    /**
-     * Devuelve respuesta.
-     */
     private MensajeResponse respuesta(Mensaje m, String bandeja, Boolean leido) {
         Usuario r = m.getRemitente();
         Participante remitente = r == null
                 ? (Boolean.TRUE.equals(m.getAvisoSistema())
-                    /**
-                     * Devuelve participante.
-                     */
                     ? new Participante(null, NOMBRE_AVISOS, "Colegio", true)
                     : new Participante(null, "Usuario eliminado", "", true))
                 : new Participante(r.getId(), r.getNombre(), RolUtil.etiqueta(r.getRol()), true);
@@ -697,10 +559,6 @@ public class MensajeService {
                 m.getRespuestaAId(), remitente, destinatarios, leido, bandeja);
     }
 
-    /**
-     * Busca usuario. Si no encuentra el registro, responde con error 404. Si los datos no son válidos,
-     * responde con error 400 y un mensaje claro para el usuario.
-     */
     private Usuario buscarUsuario(Long id) {
         if (id == null) throw new DatosInvalidosException("Falta el usuario.");
         return usuarioRepository.findById(id)

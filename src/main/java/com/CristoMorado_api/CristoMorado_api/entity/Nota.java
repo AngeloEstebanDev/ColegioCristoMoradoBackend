@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import lombok.*;
 
-/** HU-16/17: nota (0 a 20) de un alumno en una evaluación. */
 @Entity
 @Table(name = "notas", uniqueConstraints = @UniqueConstraint(columnNames = {"evaluacion_id", "estudiante_id"}))
 @Getter

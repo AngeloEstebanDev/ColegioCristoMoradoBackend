@@ -8,11 +8,6 @@ import com.CristoMorado_api.CristoMorado_api.util.UsuarioFormato;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Crea y mantiene las cuentas de acceso (tabla `usuarios`) de alumnos,
- * docentes, apoderados y directiva con el formato PREFIJO + DNI.
- * Así las reglas del nombre de usuario viven en un solo lugar.
- */
 @Service
 public class CuentaService {
 
@@ -21,17 +16,11 @@ public class CuentaService {
     private final UsuarioRepository usuarioRepository;
     private final LimpiezaUsuarioService limpiezaUsuarioService;
 
-    /**
-     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
-     */
     public CuentaService(UsuarioRepository usuarioRepository, LimpiezaUsuarioService limpiezaUsuarioService) {
         this.usuarioRepository = usuarioRepository;
         this.limpiezaUsuarioService = limpiezaUsuarioService;
     }
 
-    /**
-     * Crea la cuenta. Si no se indica contraseña, la contraseña inicial es el DNI.
-     */
     @Transactional
     public Usuario crear(String prefijo, String dni, String nombre, String rol, String password, boolean activo) {
         String usuario = usuarioPara(prefijo, dni);
@@ -44,7 +33,7 @@ public class CuentaService {
         Usuario u = Usuario.builder()
                 .nombre(recortar(nombre, 100))
                 .usuario(usuario)
-                .correo(null)                 // el Gmail lo vincula el propio usuario
+                .correo(null)
                 .correoVerificado(false)
                 .password(clave)
                 .rol(rol)
@@ -53,10 +42,6 @@ public class CuentaService {
         return usuarioRepository.save(u);
     }
 
-    /**
-     * Mantiene la cuenta al día cuando cambian los datos de la persona:
-     * nuevo DNI => nuevo usuario, nombre, estado y (opcional) contraseña.
-     */
     @Transactional
     public Usuario sincronizar(Usuario cuenta, String prefijo, String dni, String nombre,
                                boolean activo, String passwordNueva) {
@@ -78,14 +63,12 @@ public class CuentaService {
         return usuarioRepository.save(cuenta);
     }
 
-    /** Solo activa o desactiva el inicio de sesión de la cuenta. */
     @Transactional
     public Usuario cambiarEstado(Usuario cuenta, boolean activo) {
         cuenta.setEstado(activo);
         return usuarioRepository.save(cuenta);
     }
 
-    /** Borra la cuenta soltando antes sus mensajes, lecturas, etc. */
     @Transactional
     public void eliminar(Usuario cuenta) {
         if (cuenta == null) return;
@@ -93,10 +76,6 @@ public class CuentaService {
         usuarioRepository.deleteById(cuenta.getId());
     }
 
-    /**
-     * Devuelve usuario para (como texto). Si los datos no son válidos, responde con error 400 y un
-     * mensaje claro para el usuario.
-     */
     public String usuarioPara(String prefijo, String dni) {
         if (!UsuarioFormato.dniValido(dni)) {
             throw new DatosInvalidosException("El número de documento no es válido.");
@@ -104,10 +83,6 @@ public class CuentaService {
         return UsuarioFormato.generar(prefijo, dni);
     }
 
-    /**
-     * Valida contraseña. Si los datos no son válidos, responde con error 400 y un mensaje claro para
-     * el usuario.
-     */
     public static void validarPassword(String password) {
         if (password == null || password.length() < PASSWORD_MIN) {
             throw new DatosInvalidosException(
@@ -116,9 +91,6 @@ public class CuentaService {
         com.CristoMorado_api.CristoMorado_api.util.Campos.password(password);
     }
 
-    /**
-     * Recorta la creación y el mantenimiento de las cuentas de usuario.
-     */
     private static String recortar(String texto, int max) {
         if (texto == null) return null;
         return texto.length() <= max ? texto : texto.substring(0, max);

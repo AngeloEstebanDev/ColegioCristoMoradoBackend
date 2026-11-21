@@ -6,12 +6,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import lombok.*;
 
-/**
- * HU-22/28/29/30: reunión entre un responsable (docente, administrador o directivo)
- * y un padre/apoderado.
- * - SOLICITUD_PADRE: la pide el padre en un horario libre -> PENDIENTE hasta que el responsable la confirme.
- * - PROGRAMADA: la programa el responsable -> CONFIRMADA.
- */
 @Entity
 @Table(name = "citas")
 @Getter
@@ -42,7 +36,6 @@ public class Cita {
     @JoinColumn(name = "padre_id", nullable = false)
     private Usuario padre;
 
-    /** Alumno sobre el que trata la reunión (opcional). */
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "estudiante_id")
     private Estudiante estudiante;
@@ -66,19 +59,15 @@ public class Cita {
     @Column(nullable = false, length = 500)
     private String motivo;
 
-    /** SOLICITUD_PADRE | PROGRAMADA */
     @Column(nullable = false, length = 20)
     private String origen;
 
-    /** PENDIENTE | CONFIRMADA | RECHAZADA | CANCELADA | REALIZADA */
     @Column(nullable = false, length = 15)
     private String estado;
 
-    /** Respuesta del responsable, motivo de cancelación/rechazo o de la reprogramación. */
     @Column(length = 500)
     private String observacion;
 
-    /** Quién hizo el último cambio de estado (cancelar, reprogramar...). */
     @Column(name = "actualizado_por")
     private Long actualizadoPor;
 
@@ -93,7 +82,6 @@ public class Cita {
     @Column(name = "fecha_actualizacion")
     private LocalDateTime fechaActualizacion;
 
-    /** Descripción adicional que escribe quien crea la cita (opcional). */
     @Column(columnDefinition = "TEXT")
     private String detalle;
 }

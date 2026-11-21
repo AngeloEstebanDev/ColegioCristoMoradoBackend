@@ -5,12 +5,6 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-/**
- * Entidad Usuario: representa la tabla «usuarios» de la base de datos (las cuentas de acceso al
- * sistema (usuario, contraseña, rol y estado)). Cada atributo es una columna y cada objeto es una
- * fila. Hibernate (JPA) se encarga de leer y guardar estos datos. Lombok genera los getters, setters y
- * el builder para no escribirlos a mano.
- */
 @Entity
 @Table(name = "usuarios")
 @Getter
@@ -30,14 +24,9 @@ public class Usuario {
     @Column(nullable = false, unique = true, length = 100)
     private String usuario;
 
-    /**
-     * Gmail personal del usuario. Es opcional: lo vincula el propio
-     * usuario desde "Mi perfil" y queda verificado con un código.
-     */
     @Column(unique = true, length = 150)
     private String correo;
 
-    /** true cuando el usuario confirmó el correo con el código enviado. */
     @Column(name = "correo_verificado", nullable = false)
     @Builder.Default
     private Boolean correoVerificado = false;
@@ -56,11 +45,9 @@ public class Usuario {
     @Builder.Default
     private LocalDateTime fechaRegistro = LocalDateTime.now();
 
-    /** Foto de perfil (data URL base64). La sube cada usuario en "Mi perfil". */
     @Column(columnDefinition = "TEXT")
     private String foto;
 
-    /** Teléfono y dirección de las cuentas sin registro de persona (p.ej. el administrador). */
     @Column(length = 20)
     private String telefono;
 

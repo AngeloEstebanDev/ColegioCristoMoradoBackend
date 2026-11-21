@@ -4,10 +4,6 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import lombok.*;
 
-/**
- * Carpeta del contenido de un curso (p. ej. "Semana 1", "Unidad 2").
- * Se crea dentro del bimestre que está en curso (periodo activo).
- */
 @Entity
 @Table(name = "carpetas")
 @Getter
@@ -32,7 +28,6 @@ public class Carpeta {
     @Column(nullable = false, length = 120)
     private String nombre;
 
-    /** false = oculta para alumnos y padres (con todo su contenido). */
     @Column(nullable = false, columnDefinition = "boolean default true")
     @Builder.Default
     private Boolean visible = true;

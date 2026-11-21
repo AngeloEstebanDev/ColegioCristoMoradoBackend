@@ -3,7 +3,6 @@ package com.CristoMorado_api.CristoMorado_api.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-/** Curso asignado a una sección, con su docente (opcional). */
 @Entity
 @Table(name = "seccion_cursos", uniqueConstraints = @UniqueConstraint(columnNames = {"seccion_id", "curso_id"}))
 @Getter
@@ -29,11 +28,10 @@ public class SeccionCurso {
     @JoinColumn(name = "docente_id")
     private Docente docente;
 
-    /** Descripción opcional (p.ej. "Incluye taller de lectura"). */
     @Column(length = 300)
     private String descripcion;
 
     @Column(nullable = false, length = 10)
     @Builder.Default
-    private String estado = "Activo";  // Activo | Inactivo
+    private String estado = "Activo";
 }

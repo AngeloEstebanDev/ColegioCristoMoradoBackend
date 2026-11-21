@@ -9,19 +9,9 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.util.Map;
 
-/**
- * Revisa en cada petición de gestión que el usuario (cabecera X-Usuario-Id,
- * la agrega el frontend) tenga el permiso del módulo:
- * - Crear/editar/borrar alumnos, padres, docentes, cuentas o personal -> USUARIOS
- * - Grados, secciones, cursos, periodos, vínculos                     -> ACADEMICO
- * - Reportes (también para ver)                                        -> REPORTES
- * Los comunicados se validan en ComunicadoService (permiso COMUNICADOS).
- * El administrador tiene todos los permisos; la Directiva, los que le asigne el admin.
- */
 @Component
 public class PermisoInterceptor implements HandlerInterceptor {
 
-    /** Prefijo de URL -> permiso requerido para escribir (POST/PUT/PATCH/DELETE). */
     private static final Map<String, Permiso> ESCRITURA = Map.of(
             "/api/estudiantes", Permiso.USUARIOS,
             "/api/padres", Permiso.USUARIOS,
@@ -35,23 +25,16 @@ public class PermisoInterceptor implements HandlerInterceptor {
             "/api/vinculos", Permiso.ACADEMICO
     );
 
-    /** Prefijos que requieren permiso incluso para ver (GET). */
     private static final Map<String, Permiso> LECTURA = Map.of(
             "/api/reportes", Permiso.REPORTES
     );
 
     private final PermisoService permisoService;
 
-    /**
-     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
-     */
     public PermisoInterceptor(PermisoService permisoService) {
         this.permisoService = permisoService;
     }
 
-    /**
-     * Se ejecuta antes de cada petición HTTP, antes de llegar al controlador.
-     */
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         String metodo = request.getMethod();
@@ -61,7 +44,6 @@ public class PermisoInterceptor implements HandlerInterceptor {
         boolean escritura = !"GET".equalsIgnoreCase(metodo) && !"HEAD".equalsIgnoreCase(metodo);
 
         Permiso requerido = null;
-        // Cambiar permisos del personal: requiere "Gestionar permisos" (admin o p.ej. el Director).
         if (escritura && ruta.matches("/api/personal/\\d+/permisos/?")) {
             requerido = Permiso.PERMISOS;
         }
@@ -80,7 +62,7 @@ public class PermisoInterceptor implements HandlerInterceptor {
         try {
             if (cabecera != null && !cabecera.isBlank()) actorId = Long.parseLong(cabecera.trim());
         } catch (NumberFormatException ignored) { }
-        permisoService.exigir(actorId, requerido);   // lanza 403 si no tiene permiso
+        permisoService.exigir(actorId, requerido);
         return true;
     }
 }

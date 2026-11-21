@@ -14,22 +14,15 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
-/**
- * Actividad reciente (Dashboard del administrador y la Directiva).
- * Traduce cada petición de guardar/editar/eliminar a una frase ("Registró un alumno", módulo "Alumnos")
- * y la guarda en actividad_log. Los registros de más de 90 días se borran solos.
- */
 @Service
 public class ActividadLogService {
 
     private static final Logger log = LoggerFactory.getLogger(ActividadLogService.class);
     private static final int DIAS_GUARDADOS = 90;
 
-    /** Método HTTP + ruta (regex) -> módulo y acción. La primera que coincide gana. */
     private record Regla(String metodo, Pattern ruta, String modulo, String accion) {}
 
     private static final List<Regla> REGLAS = List.of(
-            // Usuarios
             r("POST", "/api/estudiantes", "Alumnos", "Registró un alumno"),
             r("PUT", "/api/estudiantes/\\d+", "Alumnos", "Editó los datos de un alumno"),
             r("PATCH", "/api/estudiantes/\\d+/estado", "Alumnos", "Cambió el estado de un alumno"),
@@ -50,7 +43,6 @@ public class ActividadLogService {
             r("PUT", "/api/personal/\\d+/permisos", "Personal", "Cambió los permisos de un miembro del personal"),
             r("PUT", "/api/personal/\\d+", "Personal", "Editó los datos de un miembro del personal"),
             r("PATCH", "/api/personal/\\d+/estado", "Personal", "Cambió el estado de un miembro del personal"),
-            // Académico
             r("POST", "/api/secciones", "Grados y Secciones", "Creó una sección"),
             r("PUT", "/api/secciones/\\d+/horario", "Grados y Secciones", "Actualizó el horario de una sección"),
             r("PUT", "/api/secciones/\\d+", "Grados y Secciones", "Editó una sección"),
@@ -70,7 +62,6 @@ public class ActividadLogService {
             r("POST", "/api/vinculos", "Vínculo Padre-Hijo", "Vinculó un padre con un alumno"),
             r("PUT", "/api/vinculos/\\d+", "Vínculo Padre-Hijo", "Editó un vínculo padre-hijo"),
             r("DELETE", "/api/vinculos/\\d+", "Vínculo Padre-Hijo", "Eliminó un vínculo padre-hijo"),
-            // Comunicación
             r("POST", "/api/comunicados", "Comunicados", "Publicó un comunicado"),
             r("PUT", "/api/comunicados/\\d+", "Comunicados", "Editó un comunicado"),
             r("DELETE", "/api/comunicados/\\d+", "Comunicados", "Eliminó un comunicado"),
@@ -78,7 +69,6 @@ public class ActividadLogService {
             r("POST", "/api/mensajes/conversaciones/\\d+", "Mensajes", "Envió un mensaje por chat"),
             r("DELETE", "/api/mensajes/conversaciones/\\d+", "Mensajes", "Eliminó una conversación"),
             r("DELETE", "/api/mensajes/\\d+", "Mensajes", "Eliminó un mensaje"),
-            // Agenda
             r("POST", "/api/agenda/citas/solicitar", "Agenda", "Solicitó una cita"),
             r("POST", "/api/agenda/citas", "Agenda", "Programó una reunión"),
             r("PATCH", "/api/agenda/citas/\\d+/confirmar", "Agenda", "Confirmó una cita"),
@@ -88,7 +78,6 @@ public class ActividadLogService {
             r("PATCH", "/api/agenda/citas/\\d+/realizada", "Agenda", "Marcó una cita como realizada"),
             r("DELETE", "/api/agenda/citas/\\d+", "Agenda", "Eliminó una cita"),
             r("*", "/api/agenda/disponibilidad.*", "Agenda", "Actualizó su disponibilidad de citas"),
-            // Aula, notas y asistencia
             r("POST", "/api/aula/cursos/\\d+/materiales", "Aula virtual", "Publicó un material"),
             r("PUT", "/api/aula/materiales/\\d+", "Aula virtual", "Editó un material"),
             r("DELETE", "/api/aula/materiales/\\d+", "Aula virtual", "Eliminó un material"),
@@ -108,7 +97,6 @@ public class ActividadLogService {
             r("PUT", "/api/notas/cursos/\\d+/notas", "Notas", "Registró notas"),
             r("PUT", "/api/asistencia/cursos/\\d+", "Asistencia", "Registró asistencia"),
             r("POST", "/api/asistencia/cursos/\\d+/sesiones", "Asistencia", "Creó una sesión de asistencia"),
-            // Cuenta
             r("PUT", "/api/perfil/\\d+", "Mi Perfil", "Actualizó su perfil"),
             r("POST", "/api/perfil/\\d+/correo/verificar", "Mi Perfil", "Vinculó su Gmail"),
             r("PATCH", "/api/perfil/\\d+/password", "Mi Perfil", "Cambió su contraseña")
@@ -118,22 +106,15 @@ public class ActividadLogService {
     private final UsuarioRepository usuarioRepository;
     private final AtomicInteger contador = new AtomicInteger();
 
-    /**
-     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
-     */
     public ActividadLogService(ActividadLogRepository repo, UsuarioRepository usuarioRepository) {
         this.repo = repo;
         this.usuarioRepository = usuarioRepository;
     }
 
-    /**
-     * Devuelve r.
-     */
     private static Regla r(String metodo, String ruta, String modulo, String accion) {
         return new Regla(metodo, Pattern.compile(ruta + "/?"), modulo, accion);
     }
 
-    /** Módulo y acción de una petición de escritura, o null si no se registra (p. ej. marcar como leído). */
     public static String[] describir(String metodo, String ruta) {
         if (metodo == null || ruta == null) return null;
         for (Regla g : REGLAS) {
@@ -144,7 +125,6 @@ public class ActividadLogService {
         return null;
     }
 
-    /** Guarda una acción. Nunca lanza errores: la actividad no debe romper la operación del usuario. */
     @Transactional
     public void registrar(Long usuarioId, String nombreEscrito, String modulo, String accion, String estado) {
         try {
@@ -166,17 +146,11 @@ public class ActividadLogService {
         }
     }
 
-    /**
-     * Devuelve recientes (como lista). Solo lee datos (transacción de solo lectura).
-     */
     @Transactional(readOnly = true)
     public List<ActividadLog> recientes() {
         return repo.findTop20ByOrderByFechaDescIdDesc();
     }
 
-    /**
-     * Recorta el registro de actividad reciente.
-     */
     private static String recortar(String s, int max) {
         if (s == null) return null;
         return s.length() <= max ? s : s.substring(0, max);

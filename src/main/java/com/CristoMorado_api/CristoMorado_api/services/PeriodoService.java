@@ -14,11 +14,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * Académico > Periodos: bimestres del año escolar.
- * Un bimestre por año (1 a 4), sin cruces de fechas. El periodo activo NO se elige a mano:
- * es el que contiene la fecha de hoy (entre bimestres no hay periodo activo).
- */
 @Service
 public class PeriodoService {
 
@@ -27,14 +22,10 @@ public class PeriodoService {
 
     private final PeriodoRepository periodoRepository;
 
-    /**
-     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
-     */
     public PeriodoService(PeriodoRepository periodoRepository) {
         this.periodoRepository = periodoRepository;
     }
 
-    /** Del más reciente al más antiguo; dentro del año, del I al IV bimestre. */
     @Transactional
     public List<PeriodoDto.Response> listar() {
         sincronizarActivo();
@@ -44,10 +35,6 @@ public class PeriodoService {
                 .toList();
     }
 
-    /**
-     * Crea un nuevo registro (el periodo) con los datos recibidos. Se ejecuta en una transacción: si
-     * algo falla, no se guarda nada a medias. Guarda los cambios en la base de datos.
-     */
     @Transactional
     public PeriodoDto.Response crear(PeriodoDto.Request req) {
         Periodo p = Periodo.builder().build();
@@ -56,7 +43,6 @@ public class PeriodoService {
         return PeriodoDto.Response.fromEntity(periodoRepository.save(p));
     }
 
-    /** Editar el nombre, el año, el bimestre o las fechas de un periodo (con las mismas reglas que al crearlo). */
     @Transactional
     public PeriodoDto.Response actualizar(Long id, PeriodoDto.Request req) {
         Periodo p = periodoRepository.findById(id)
@@ -66,7 +52,6 @@ public class PeriodoService {
         return PeriodoDto.Response.fromEntity(periodoRepository.save(p));
     }
 
-    /** Valida los datos y los copia al periodo. idActual = periodo que se edita (se excluye de los choques). */
     private void aplicar(Periodo p, PeriodoDto.Request req, Long idActual) {
         if (req == null) throw new DatosInvalidosException("Faltan los datos del periodo.");
         Integer anio = req.anio();
@@ -101,10 +86,6 @@ public class PeriodoService {
         p.setFechaFin(req.fechaFin());
     }
 
-    /**
-     * Guarda en la columna "activo" si cada periodo contiene la fecha de hoy
-     * (para que la base de datos muestre lo mismo que el sistema).
-     */
     @Transactional
     public void sincronizarActivo() {
         LocalDate hoy = LocalDate.now();

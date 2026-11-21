@@ -6,39 +6,22 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.util.Collection;
 
-/**
- * Reglas de validación de campos usadas por todos los formularios del sistema.
- * Son las mismas reglas que aplica el frontend (core/utils/validadores.ts), para que
- * nada inválido llegue a la base de datos aunque se llame a la API directamente.
- *
- *  - Nombre de persona: solo letras, espacios, apóstrofo, punto o guion (nombre y apellido).
- *  - Teléfono: celular de 9 dígitos que empieza con 9 (se aceptan espacios al escribirlo).
- *  - Correo: usuario@dominio.ext, hasta 150 caracteres.
- *  - Textos: se recortan y se limita su longitud a la de la columna en la base de datos.
- *  - Fechas de nacimiento: no futuras y con una edad razonable para cada tipo de persona.
- */
 public final class Campos {
 
-    /** Letras (incluye tildes, ñ y ü), espacios, apóstrofo, punto y guion; empieza con letra. */
     private static final String LETRAS = "[\\p{L}][\\p{L} .'’-]*";
 
     public static final int NOMBRE_MAX = 100;
     public static final int DIRECCION_MAX = 200;
     public static final int CORREO_MAX = 150;
 
-    /**
-     * Constructor de Campos.
-     */
     private Campos() {}
 
-    /** Quita espacios al inicio y al final y deja un solo espacio entre palabras. Vacío -> null. */
     public static String limpio(String s) {
         if (s == null) return null;
         String t = s.trim().replaceAll("\\s+", " ");
         return t.isEmpty() ? null : t;
     }
 
-    /** Nombre completo de una persona: obligatorio, nombre y apellido, solo letras, 5 a 100 caracteres. */
     public static String nombreCompleto(String nombre, String vacio) {
         String n = limpio(nombre);
         if (n == null) throw new DatosInvalidosException(vacio);
@@ -50,7 +33,6 @@ public final class Campos {
         return n;
     }
 
-    /** Nombres o un apellido (directiva): solo letras, 2 a max caracteres. Si no es obligatorio, vacío -> null. */
     public static String parteNombre(String valor, String etiqueta, int max, boolean obligatorio) {
         String v = limpio(valor);
         if (v == null) {
@@ -64,7 +46,6 @@ public final class Campos {
         return v;
     }
 
-    /** Celular peruano: 9 dígitos y empieza con 9. Se aceptan espacios o guiones al escribirlo. */
     public static String telefono(String telefono, boolean obligatorio) {
         String t = telefono == null ? "" : telefono.replaceAll("[\\s-]", "");
         if (t.isEmpty()) {
@@ -77,7 +58,6 @@ public final class Campos {
         return t;
     }
 
-    /** Correo opcional: vacío -> null; si se escribe, usuario@dominio.ext y hasta 150 caracteres. */
     public static String correo(String correo, String etiqueta) {
         String c = correo == null ? null : correo.trim();
         if (c == null || c.isEmpty()) return null;
@@ -86,7 +66,6 @@ public final class Campos {
         return c.toLowerCase();
     }
 
-    /** Texto libre: recorta espacios; valida longitud máxima (y mínima si se indica). */
     public static String texto(String valor, String etiqueta, int min, int max, boolean obligatorio) {
         String v = valor == null ? null : valor.trim();
         if (v == null || v.isEmpty()) {
@@ -98,23 +77,17 @@ public final class Campos {
         return v;
     }
 
-    /** Dirección opcional: 5 a 200 caracteres. */
     public static String direccion(String direccion) {
         return texto(limpio(direccion), "la dirección", 5, DIRECCION_MAX, false);
     }
 
-    /** Texto que debe ser uno de los valores permitidos (sin distinguir mayúsculas). Vacío -> null. */
     public static String opcion(String valor, Collection<String> permitidos, String etiqueta) {
         String v = limpio(valor);
         if (v == null) return null;
         for (String p : permitidos) if (p.equalsIgnoreCase(v)) return p;
-        /**
-         * Devuelve datos invalidos exception.
-         */
         throw new DatosInvalidosException(mayuscula(etiqueta) + " no es válido. Usa: " + String.join(", ", permitidos) + ".");
     }
 
-    /** Fecha de nacimiento opcional: no futura y con edad entre minEdad y maxEdad años. */
     public static LocalDate fechaNacimiento(LocalDate fecha, int minEdad, int maxEdad) {
         if (fecha == null) return null;
         LocalDate hoy = LocalDate.now();
@@ -126,7 +99,6 @@ public final class Campos {
         return fecha;
     }
 
-    /** Número entero opcional dentro de [min, max]. */
     public static Integer entero(Integer valor, int min, int max, String etiqueta) {
         if (valor == null) return null;
         if (valor < min || valor > max) {
@@ -135,7 +107,6 @@ public final class Campos {
         return valor;
     }
 
-    /** Fecha opcional que no puede ser futura. */
     public static LocalDate noFutura(LocalDate fecha, String etiqueta) {
         if (fecha != null && fecha.isAfter(LocalDate.now())) {
             throw new DatosInvalidosException(mayuscula(etiqueta) + " no puede ser futura.");
@@ -143,7 +114,6 @@ public final class Campos {
         return fecha;
     }
 
-    /** Contraseña nueva: 4 a 64 caracteres y sin espacios. */
     public static String password(String password) {
         if (password == null || password.isEmpty()) return null;
         if (password.length() < 4) throw new DatosInvalidosException("La contraseña debe tener al menos 4 caracteres.");
@@ -152,9 +122,6 @@ public final class Campos {
         return password;
     }
 
-    /**
-     * Devuelve mayuscula (como texto).
-     */
     private static String mayuscula(String s) {
         return s.isEmpty() ? s : Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }

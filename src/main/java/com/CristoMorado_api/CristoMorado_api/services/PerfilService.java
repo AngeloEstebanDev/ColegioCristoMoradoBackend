@@ -20,11 +20,6 @@ import com.CristoMorado_api.CristoMorado_api.util.RolUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Servicio del perfil del usuario (sus datos y su foto). Aquí está la lógica de negocio: valida los
- * datos, aplica las reglas del colegio y usa los repositorios para leer o guardar en la base de datos.
- * Los controladores llaman a estos métodos.
- */
 @Service
 public class PerfilService {
 
@@ -36,9 +31,6 @@ public class PerfilService {
     private final PersonalRepository personalRepository;
     private final PermisoService permisoService;
 
-    /**
-     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
-     */
     public PerfilService(UsuarioRepository usuarioRepository, DocenteRepository docenteRepository,
                          EstudianteRepository estudianteRepository, PadreFamiliaRepository padreFamiliaRepository,
                          VerificacionService verificacionService, PersonalRepository personalRepository,
@@ -52,24 +44,15 @@ public class PerfilService {
         this.verificacionService = verificacionService;
     }
 
-    /** Perfil completo: cuenta + datos del alumno, docente o apoderado. */
     @Transactional(readOnly = true)
     public PerfilResponse obtener(Long usuarioId) {
         return construirRespuesta(buscarUsuario(usuarioId));
     }
 
-    /** ~2 MB de imagen en base64. */
     private static final int FOTO_MAX = 2_800_000;
 
-    /** Avatares predefinidos del colegio (archivos del frontend en /avatares). */
     private static final String AVATAR_REGEX = "^/avatares/[a-z0-9-]{1,40}\\.svg$";
 
-    /**
-     * Todos menos los alumnos pueden cambiar sus datos personales y su dirección.
-     * La foto de perfil (foto propia o avatar del colegio) la pueden cambiar TODOS,
-     * incluidos los alumnos.
-     * No se cambian: número de documento (de él sale el usuario), rol, estado ni Gmail.
-     */
     @Transactional
     public PerfilResponse actualizar(Long usuarioId, PerfilUpdateRequest req) {
         Usuario u = buscarUsuario(usuarioId);
@@ -82,7 +65,6 @@ public class PerfilService {
                     + "Si algún dato está mal, pide a la administración que lo corrija.");
         }
 
-        // ---- Foto de perfil (en la cuenta, sirve para todos los roles)
         if (Boolean.TRUE.equals(req.quitarFoto())) {
             u.setFoto(null);
         } else if (req.foto() != null && !req.foto().isBlank()) {
@@ -98,7 +80,6 @@ public class PerfilService {
         }
 
         if (!puedeEditar(u)) {
-            // Alumno: solo la foto.
             if (!cambiaFoto) throw new DatosInvalidosException("Elige una foto o un avatar.");
             usuarioRepository.save(u);
             return construirRespuesta(u);
@@ -122,7 +103,6 @@ public class PerfilService {
         Personal personal = personalRepository.findByUsuarioId(usuarioId).orElse(null);
 
         if (personal != null) {
-            // Directiva: nombres y apellidos por separado; el nombre de la cuenta se arma con ellos.
             String nombres = texto(req.nombres(), 100, "Los nombres");
             String apPat = texto(req.apellidoPaterno(), 60, "El apellido paterno");
             String apMat = texto(req.apellidoMaterno(), 60, "El apellido materno");
@@ -175,7 +155,6 @@ public class PerfilService {
                 if (req.fechaNacimiento() != null) padre.setFechaNacimiento(req.fechaNacimiento());
                 padreFamiliaRepository.save(padre);
             } else {
-                // Administrador (sin registro de persona): teléfono y dirección en la cuenta.
                 if (telefono != null) u.setTelefono(vacioANull(telefono));
                 if (direccion != null) u.setDireccion(vacioANull(direccion));
             }
@@ -184,7 +163,6 @@ public class PerfilService {
         return construirRespuesta(u);
     }
 
-    /** null = no se envió; "" = se borró; si no, el texto limpio (y con largo válido). */
     private static String texto(String valor, int max, String campo) {
         if (valor == null) return null;
         String t = valor.trim().replaceAll("\\s+", " ");
@@ -192,57 +170,30 @@ public class PerfilService {
         return t;
     }
 
-    /**
-     * Convierte un texto vacío en null (para no guardar cadenas vacías).
-     */
     private static String vacioANull(String v) {
         return v == null || v.isEmpty() ? null : v;
     }
 
-    /**
-     * Recorta el perfil del usuario (sus datos y su foto).
-     */
     private static String recortar(String v, int max) {
         return v.length() > max ? v.substring(0, max) : v;
     }
 
-    // ---- Gmail ----
-
-    /**
-     * Envía código correo.
-     */
     public CodigoEnviadoResponse enviarCodigoCorreo(Long usuarioId, String correo) {
         return verificacionService.enviarCodigoVinculacion(usuarioId, correo);
     }
 
-    /**
-     * Sin @Transactional propio: VerificacionService maneja la transacción
-     * (así un código incorrecto sí cuenta como intento fallido). El controlador
-     * vuelve a pedir el perfil completo después.
-     */
     public void verificarCorreo(Long usuarioId, String codigo) {
         verificacionService.confirmarVinculacion(usuarioId, codigo);
     }
 
-    // ---- Contraseña (con código al Gmail) ----
-
-    /**
-     * Envía código contraseña.
-     */
     public CodigoEnviadoResponse enviarCodigoPassword(Long usuarioId) {
         return verificacionService.enviarCodigoCambioPassword(usuarioId);
     }
 
-    /**
-     * Cambia contraseña.
-     */
     public void cambiarPassword(Long usuarioId, CambiarPasswordRequest req) {
         verificacionService.cambiarPassword(usuarioId, req.passwordActual(), req.passwordNueva(), req.codigo());
     }
 
-    // ------------------------------------------------------------------
-
-    /** ¿La solicitud trae algún dato distinto de la foto? */
     private static boolean traeDatosPersonales(PerfilUpdateRequest r) {
         return r.nombre() != null || r.nombres() != null || r.apellidoPaterno() != null
                 || r.apellidoMaterno() != null || r.telefono() != null || r.direccion() != null
@@ -250,16 +201,10 @@ public class PerfilService {
                 || r.especialidad() != null || r.tituloProfesional() != null;
     }
 
-    /**
-     * Indica si puede editar (devuelve verdadero o falso).
-     */
     static boolean puedeEditar(Usuario u) {
         return RolUtil.categoria(u.getRol()) != RolUtil.Categoria.ALUMNO;
     }
 
-    /**
-     * Construye respuesta.
-     */
     private PerfilResponse construirRespuesta(Usuario u) {
         Docente docente = docenteRepository.findByUsuarioId(u.getId()).orElse(null);
         Estudiante estudiante = estudianteRepository.findByUsuarioId(u.getId()).orElse(null);
@@ -281,9 +226,6 @@ public class PerfilService {
         );
     }
 
-    /**
-     * Busca usuario. Si no encuentra el registro, responde con error 404.
-     */
     private Usuario buscarUsuario(Long id) {
         return usuarioRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado."));

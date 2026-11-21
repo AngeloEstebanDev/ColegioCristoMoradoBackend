@@ -13,12 +13,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Fotos de perfil para los avatares de todo el sistema (comunicados, mensajes, citas,
- * listas de usuarios, participantes...).
- *  - GET /api/fotos        -> índice {usuarioId: versión o ruta de avatar}, solo de quienes tienen foto.
- *  - GET /api/fotos/{id}   -> la imagen subida por el usuario (se guarda en caché del navegador).
- */
 @RestController
 @RequestMapping("/api/fotos")
 @CrossOrigin(origins = "${app.cors.origenes}")
@@ -26,17 +20,10 @@ public class FotoController {
 
     private final UsuarioRepository usuarioRepository;
 
-    /**
-     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
-     */
     public FotoController(UsuarioRepository usuarioRepository) {
         this.usuarioRepository = usuarioRepository;
     }
 
-    /**
-     * Endpoint GET /api/fotos — Devuelve indice (como mapa clave → valor). Solo lee datos (transacción
-     * de solo lectura).
-     */
     @GetMapping
     @Transactional(readOnly = true)
     public Map<Long, String> indice() {
@@ -47,15 +34,10 @@ public class FotoController {
         return indice;
     }
 
-    /**
-     * Endpoint GET /api/fotos/{usuarioId} — Devuelve foto como respuesta HTTP. Solo lee datos
-     * (transacción de solo lectura).
-     */
     @GetMapping("/{usuarioId}")
     @Transactional(readOnly = true)
     public ResponseEntity<byte[]> foto(@PathVariable Long usuarioId) {
         String foto = usuarioRepository.findById(usuarioId).map(Usuario::getFoto).orElse(null);
-        // Solo las fotos subidas (data URL "data:image/png;base64,...."); los avatares los sirve el frontend.
         if (foto == null || !foto.startsWith("data:image/") || !foto.contains(";base64,")) {
             return ResponseEntity.notFound().build();
         }

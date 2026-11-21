@@ -5,7 +5,6 @@ import lombok.*;
 
 import java.time.LocalTime;
 
-/** Bloque del horario semanal de una sección: un curso, un día y un rango de horas. */
 @Entity
 @Table(name = "horario_bloques")
 @Getter
@@ -27,7 +26,6 @@ public class HorarioBloque {
     @JoinColumn(name = "seccion_curso_id", nullable = false)
     private SeccionCurso seccionCurso;
 
-    /** 1 = Lunes ... 5 = Viernes. */
     @Column(nullable = false)
     private Integer dia;
 

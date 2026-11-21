@@ -7,11 +7,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * DTO de salida PadreFamiliaResponse: datos que el backend devuelve al frontend (en JSON) sobre los
- * padres de familia. Se arma a partir de la entidad para enviar solo lo necesario (por ejemplo, nunca
- * la contraseña).
- */
 public record PadreFamiliaResponse(
         Long id,
         String nombreCompleto,
@@ -24,16 +19,12 @@ public record PadreFamiliaResponse(
         String estado,
         LocalDateTime fechaRegistro,
         List<EstudianteResumen> estudiantes,
-        // --- Cuenta de acceso (usuario APO + DNI) ---
         Long usuarioId,
         String usuario,
         String correoCuenta,
         Boolean correoVerificado,
         Boolean cuentaActiva
 ) {
-    /**
-     * Convierte la entidad en este DTO, copiando solo los datos que necesita el frontend.
-     */
     public static PadreFamiliaResponse fromEntity(PadreFamilia p) {
         List<EstudianteResumen> hijos = p.getVinculosFamiliares() == null ? List.of() :
                 p.getVinculosFamiliares().stream()

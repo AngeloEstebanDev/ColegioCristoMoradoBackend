@@ -8,12 +8,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Entidad Estudiante: representa la tabla «estudiantes» de la base de datos (los estudiantes (alumnos)
- * del colegio). Cada atributo es una columna y cada objeto es una fila. Hibernate (JPA) se encarga de
- * leer y guardar estos datos. Lombok genera los getters, setters y el builder para no escribirlos a
- * mano.
- */
 @Entity
 @Table(name = "estudiantes")
 @Getter
@@ -30,7 +24,6 @@ public class Estudiante {
     @Column(name = "nombre_completo", nullable = false, length = 150)
     private String nombreCompleto;
 
-    /** DNI, CE (carné de extranjería), PASAPORTE u OTRO. El número va en "dni". */
     @Column(name = "tipo_documento", nullable = false, length = 10)
     @Builder.Default
     private String tipoDocumento = "DNI";
@@ -56,11 +49,9 @@ public class Estudiante {
     @Column(length = 20)
     private String telefono;
 
-    /** "1° Primaria" ... "5° Secundaria". Vacío = sin matrícula. */
     @Column(length = 20)
     private String grado;
 
-    /** Letra de la sección (A, B, ...). Vacío = sin matrícula. */
     @Column(length = 5)
     private String seccion;
 
@@ -75,12 +66,6 @@ public class Estudiante {
     @Builder.Default
     private LocalDateTime fechaRegistro = LocalDateTime.now();
 
-    /**
-     * Cuenta de acceso del alumno (tabla `usuarios`, rol ALUMNO).
-     * El correo y la contraseña con los que inicia sesión viven en esa
-     * cuenta, así que cualquier cambio (desde Alumnos, Administrativo o
-     * Configuración) se guarda en un solo lugar de la base de datos.
-     */
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id", unique = true)
     private Usuario usuario;

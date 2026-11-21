@@ -24,18 +24,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.*;
 
-/**
- * Servicio de los comunicados institucionales. Aquí está la lógica de negocio: valida los datos,
- * aplica las reglas del colegio y usa los repositorios para leer o guardar en la base de datos. Los
- * controladores llaman a estos métodos.
- */
 @Service
 public class ComunicadoService {
 
-    /** ~3 MB en base64 (la imagen original de hasta ~2 MB). */
     private static final int IMAGEN_MAX = 3_000_000;
 
-    /** Grupos a los que puede escribir un docente (siempre limitado a sus secciones). */
     private static final Set<String> GRUPOS_DOCENTE = Set.of(RolUtil.GRUPO_ALUMNOS, RolUtil.GRUPO_PADRES);
 
     private final ComunicadoRepository comunicadoRepository;
@@ -47,9 +40,6 @@ public class ComunicadoService {
     private final EstudianteRepository estudianteRepository;
     private final PadreFamiliaRepository padreRepository;
 
-    /**
-     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
-     */
     public ComunicadoService(ComunicadoRepository comunicadoRepository,
                              ComunicadoLecturaRepository lecturaRepository,
                              UsuarioRepository usuarioRepository,
@@ -68,16 +58,8 @@ public class ComunicadoService {
         this.padreRepository = padreRepository;
     }
 
-    /** Datos del usuario que consulta, calculados una sola vez por petición. */
     private record Contexto(Usuario usuario, boolean gestiona, Set<Long> secciones) {}
 
-    /**
-     * Comunicados que le corresponden al usuario:
-     * - Administración ve todos (para gestionarlos).
-     * - El resto ve los dirigidos a TODOS o a su grupo (Docentes, Alumnos, Padres);
-     *   si el comunicado está limitado a secciones, solo si es de una de ellas
-     *   (alumno: su sección; padre: la de alguno de sus hijos; docente: donde enseña).
-     */
     @Transactional(readOnly = true)
     public List<ComunicadoResponse> listar(Long usuarioId) {
         Contexto ctx = contexto(usuarioId);
@@ -92,10 +74,6 @@ public class ComunicadoService {
                 .toList();
     }
 
-    /**
-     * Obtiene el comunicado indicado por su id. Solo lee datos (transacción de solo lectura). Si el
-     * usuario no tiene permiso para esta acción, responde con error 403.
-     */
     @Transactional(readOnly = true)
     public ComunicadoResponse obtener(Long id, Long usuarioId) {
         Contexto ctx = contexto(usuarioId);
@@ -106,10 +84,6 @@ public class ComunicadoService {
         return respuesta(c, ctx);
     }
 
-    /**
-     * Crea un nuevo registro (el comunicado) con los datos recibidos. Se ejecuta en una transacción:
-     * si algo falla, no se guarda nada a medias. Guarda los cambios en la base de datos.
-     */
     @Transactional
     public ComunicadoResponse crear(Long usuarioId, ComunicadoRequest req) {
         Contexto ctx = contexto(usuarioId);
@@ -119,15 +93,10 @@ public class ComunicadoService {
         c.setAutor(ctx.usuario());
         c.setFechaCreacion(LocalDateTime.now());
         c = comunicadoRepository.save(c);
-        // El autor no necesita verlo como "no leído".
         marcarLeido(c.getId(), usuarioId);
         return respuesta(c, ctx);
     }
 
-    /**
-     * Actualiza los datos del comunicado indicado por su id. Se ejecuta en una transacción: si algo
-     * falla, no se guarda nada a medias. Guarda los cambios en la base de datos.
-     */
     @Transactional
     public ComunicadoResponse actualizar(Long id, Long usuarioId, ComunicadoRequest req) {
         Contexto ctx = contexto(usuarioId);
@@ -138,10 +107,6 @@ public class ComunicadoService {
         return respuesta(comunicadoRepository.save(c), ctx);
     }
 
-    /**
-     * Elimina el comunicado indicado por su id. Se ejecuta en una transacción: si algo falla, no se
-     * guarda nada a medias. Borra registros de la base de datos.
-     */
     @Transactional
     public void eliminar(Long id, Long usuarioId) {
         Contexto ctx = contexto(usuarioId);
@@ -151,10 +116,6 @@ public class ComunicadoService {
         comunicadoRepository.delete(c);
     }
 
-    /**
-     * Marca leido. Se ejecuta en una transacción: si algo falla, no se guarda nada a medias. Si no
-     * encuentra el registro, responde con error 404. Guarda los cambios en la base de datos.
-     */
     @Transactional
     public void marcarLeido(Long comunicadoId, Long usuarioId) {
         if (!comunicadoRepository.existsById(comunicadoId)) {
@@ -168,13 +129,11 @@ public class ComunicadoService {
         }
     }
 
-    /** Cantidad de comunicados que el usuario todavía no ha leído (HU-26: campana del navbar). */
     @Transactional(readOnly = true)
     public long contarNoLeidos(Long usuarioId) {
         return listar(usuarioId).stream().filter(c -> !c.leido()).count();
     }
 
-    /** Secciones a las que el docente puede enviar comunicados (id -> "3° Primaria A"). */
     @Transactional(readOnly = true)
     public List<Map<String, Object>> seccionesParaPublicar(Long usuarioId) {
         Contexto ctx = contexto(usuarioId);
@@ -191,11 +150,6 @@ public class ComunicadoService {
                 .toList();
     }
 
-    // ------------------------------------------------------------------
-
-    /**
-     * Devuelve contexto.
-     */
     private Contexto contexto(Long usuarioId) {
         Usuario u = buscarUsuario(usuarioId);
         boolean gestiona = permisoService.tiene(u, Permiso.COMUNICADOS);
@@ -213,9 +167,6 @@ public class ComunicadoService {
         return new Contexto(u, gestiona, secciones);
     }
 
-    /**
-     * Indica si puede ver (devuelve verdadero o falso).
-     */
     private boolean puedeVer(Contexto ctx, Comunicado c) {
         Usuario u = ctx.usuario();
         if (RolUtil.esAdministrativo(u.getRol())) return true;
@@ -228,37 +179,21 @@ public class ComunicadoService {
         return c.getSecciones().stream().anyMatch(ctx.secciones()::contains);
     }
 
-    /** Administración con permiso: todos. Docente: solo los suyos. */
     private boolean editable(Contexto ctx, Comunicado c) {
         if (ctx.gestiona()) return true;
         return AccesoService.esDocente(ctx.usuario()) && c.getAutor() != null
                 && c.getAutor().getId().equals(ctx.usuario().getId());
     }
 
-    /**
-     * Comprueba que se cumpla publicar. Si el usuario no tiene permiso para esta acción, responde con
-     * error 403.
-     */
     private void exigirPublicar(Contexto ctx) {
         if (ctx.gestiona() || AccesoService.esDocente(ctx.usuario())) return;
-        /**
-         * Devuelve acceso denegado exception.
-         */
         throw new AccesoDenegadoException("No tienes permiso para gestionar comunicados.");
     }
 
-    /**
-     * Comprueba que se cumpla editar. Si el usuario no tiene permiso para esta acción, responde con
-     * error 403.
-     */
     private void exigirEditar(Contexto ctx, Comunicado c) {
         if (!editable(ctx, c)) throw new AccesoDenegadoException("Solo puedes modificar tus propios comunicados.");
     }
 
-    /**
-     * Aplica datos. Si los datos no son válidos, responde con error 400 y un mensaje claro para el
-     * usuario. Si el usuario no tiene permiso para esta acción, responde con error 403.
-     */
     private void aplicarDatos(Comunicado c, ComunicadoRequest req, Contexto ctx) {
         if (req == null) throw new DatosInvalidosException("Faltan los datos del comunicado.");
         String titulo = req.titulo() == null ? "" : req.titulo().trim();
@@ -313,7 +248,6 @@ public class ComunicadoService {
         boolean anuncio = Boolean.TRUE.equals(req.anuncio());
 
         if (!ctx.gestiona()) {
-            // Docente: a los alumnos y/o padres de SUS secciones.
             if (!GRUPOS_DOCENTE.containsAll(grupos)) {
                 throw new DatosInvalidosException("Como docente puedes enviar comunicados a alumnos y/o padres de tus secciones.");
             }
@@ -337,34 +271,22 @@ public class ComunicadoService {
         c.getSecciones().addAll(secciones);
     }
 
-    /**
-     * Devuelve respuesta.
-     */
     private ComunicadoResponse respuesta(Comunicado c, Contexto ctx) {
         boolean leido = lecturaRepository.existsByComunicadoIdAndUsuarioId(c.getId(), ctx.usuario().getId());
         return ComunicadoResponse.of(c, leido, conteoLecturas().getOrDefault(c.getId(), 0L),
                 secciones(c, nombresSecciones()), editable(ctx, c));
     }
 
-    /**
-     * Devuelve nombres secciones (como mapa clave → valor).
-     */
     private Map<Long, String> nombresSecciones() {
         Map<Long, String> m = new HashMap<>();
         seccionRepository.findAll().forEach(s -> m.put(s.getId(), AccesoService.salon(s)));
         return m;
     }
 
-    /**
-     * Devuelve secciones (como lista).
-     */
     private static List<String> secciones(Comunicado c, Map<Long, String> nombres) {
         return c.getSecciones().stream().map(id -> nombres.getOrDefault(id, "Sección eliminada")).toList();
     }
 
-    /**
-     * Devuelve conteo lecturas (como mapa clave → valor).
-     */
     private Map<Long, Long> conteoLecturas() {
         Map<Long, Long> mapa = new HashMap<>();
         for (Object[] fila : lecturaRepository.contarPorComunicado()) {
@@ -373,19 +295,12 @@ public class ComunicadoService {
         return mapa;
     }
 
-    /**
-     * Busca usuario. Si no encuentra el registro, responde con error 404. Si los datos no son válidos,
-     * responde con error 400 y un mensaje claro para el usuario.
-     */
     private Usuario buscarUsuario(Long id) {
         if (id == null) throw new DatosInvalidosException("Falta el usuario.");
         return usuarioRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado."));
     }
 
-    /**
-     * Busca comunicado. Si no encuentra el registro, responde con error 404.
-     */
     private Comunicado buscarComunicado(Long id) {
         return comunicadoRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Comunicado no encontrado."));

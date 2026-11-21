@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.*;
 
-/** Pregunta de opción múltiple de un cuestionario. */
 @Entity
 @Table(name = "preguntas_cuestionario")
 @Getter
@@ -39,15 +38,10 @@ public class PreguntaCuestionario {
     public static final String UNICA = "UNICA";
     public static final String MULTIPLE = "MULTIPLE";
 
-    /** UNICA (una respuesta correcta) | MULTIPLE (varias). */
     @Column(nullable = false, length = 10, columnDefinition = "varchar(10) default 'UNICA'")
     @Builder.Default
     private String tipo = UNICA;
 
-    /**
-     * UNICA: índice (desde 0) de la opción correcta.
-     * MULTIPLE: máscara de bits de las opciones correctas (opción i = 1 << i).
-     */
     @Column(name = "respuesta_correcta", nullable = false)
     private Integer respuestaCorrecta;
 

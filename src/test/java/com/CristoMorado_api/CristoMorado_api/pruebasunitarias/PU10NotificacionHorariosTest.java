@@ -17,20 +17,12 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-/**
- * PU-10 – HU-23: Notificaciones de horarios (Épica 3, Sprint 3).
- * Al guardar un horario con cambios, HorarioService avisa a los alumnos de la sección (MensajeService.enviarAviso).
- */
 @DisplayName("PU-10 – HU-23: Notificaciones de horarios")
 class PU10NotificacionHorariosTest {
 
     private MensajeService mensajeService;
     private HorarioService servicio;
 
-    /**
-     * Se ejecuta antes de cada prueba: crea los mocks (objetos simulados con Mockito) y los datos de
-     * ejemplo.
-     */
     @BeforeEach
     void setUp() {
         SeccionRepository seccionRepository = mock(SeccionRepository.class);
@@ -45,7 +37,6 @@ class PU10NotificacionHorariosTest {
                 .curso(Curso.builder().id(1L).nombre("Matemática").build()).estado("Activo").build();
         when(seccionRepository.findById(8L)).thenReturn(Optional.of(quintoA));
         when(seccionCursoRepository.findById(64L)).thenReturn(Optional.of(matematica));
-        // Horario anterior: Matemática el lunes de 07:45 a 08:30.
         when(bloqueRepository.findBySeccionId(8L)).thenReturn(List.of(HorarioBloque.builder().id(1L).seccion(quintoA)
                 .seccionCurso(matematica).dia(1).horaInicio(LocalTime.of(7, 45)).horaFin(LocalTime.of(8, 30)).build()));
         Usuario cuentaJuan = Usuario.builder().id(32L).usuario("ALU87654321").estado(true).build();
@@ -53,11 +44,6 @@ class PU10NotificacionHorariosTest {
                 .thenReturn(List.of(Estudiante.builder().id(1L).nombreCompleto("Juan Pérez García").usuario(cuentaJuan).build()));
     }
 
-    /**
-     * Caso de prueba: PU-10.1 Modificación válida del horario: se genera la notificación «Cambio de
-     * horario» para los alumnos. Prepara los datos (arrange), ejecuta el método (act) y comprueba el
-     * resultado esperado (assert).
-     */
     @Test
     @DisplayName("PU-10.1 Modificación válida del horario: se genera la notificación «Cambio de horario» para los alumnos")
     void c1_generaNotificacion() {
@@ -66,11 +52,6 @@ class PU10NotificacionHorariosTest {
         verify(mensajeService, times(1)).enviarAviso(any(), eq("Cambio de horario"), anyString());
     }
 
-    /**
-     * Caso de prueba: PU-10.2 Datos incompletos de la modificación (sin día): no se genera
-     * notificación. Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado
-     * esperado (assert).
-     */
     @Test
     @DisplayName("PU-10.2 Datos incompletos de la modificación (sin día): no se genera notificación")
     void c2_datosIncompletos() {

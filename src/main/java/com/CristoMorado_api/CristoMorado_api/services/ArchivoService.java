@@ -11,23 +11,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
-/**
- * Guarda y entrega los archivos del aula virtual (máximo 10 MB cada uno).
- * Llegan en base64 dentro del JSON, igual que las imágenes de los comunicados.
- */
 @Service
 public class ArchivoService {
 
     public static final long MAX_BYTES = 10L * 1024 * 1024;
 
-    /** Extensiones que no se aceptan por seguridad (programas y scripts). */
     private static final Set<String> BLOQUEADAS = Set.of(
             "exe", "bat", "cmd", "com", "msi", "scr", "vbs", "ps1", "sh", "jar", "js", "dll", "apk", "reg");
 
-    /**
-     * Formatos que el docente puede pedir en una entrega (y sus extensiones).
-     * Las entregas de los alumnos SOLO aceptan estos formatos.
-     */
     public static final Map<String, Set<String>> FORMATOS = new LinkedHashMap<>();
     static {
         FORMATOS.put("PDF", Set.of("pdf"));
@@ -44,9 +35,6 @@ public class ArchivoService {
     private final EntregaEnvioRepository envioRepository;
     private final AccesoService accesoService;
 
-    /**
-     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
-     */
     public ArchivoService(ArchivoAdjuntoRepository archivoRepository, MaterialRepository materialRepository,
                           ActividadRepository actividadRepository, EntregaRepository entregaRepository,
                           EntregaEnvioRepository envioRepository, AccesoService accesoService) {
@@ -58,17 +46,11 @@ public class ArchivoService {
         this.accesoService = accesoService;
     }
 
-    /** Valida y guarda el archivo. Devuelve null si no se envió archivo. */
     @Transactional
     public ArchivoAdjunto guardar(ArchivoDto.Request req, Long usuarioId) {
         return guardar(req, usuarioId, null);
     }
 
-    /**
-     * Igual que guardar(), pero solo acepta los formatos indicados (PDF, WORD, EXCEL, PPT, IMAGEN).
-     * Se usa en las entregas de los alumnos: revisa la extensión y también el contenido real
-     * del archivo (un .exe renombrado a .pdf se rechaza).
-     */
     @Transactional
     public ArchivoAdjunto guardar(ArchivoDto.Request req, Long usuarioId, Collection<String> formatos) {
         if (req == null || req.contenido() == null || req.contenido().isBlank()) return null;
@@ -105,19 +87,11 @@ public class ArchivoService {
                 .build());
     }
 
-    /**
-     * Elimina el archivo. Se ejecuta en una transacción: si algo falla, no se guarda nada a medias.
-     * Borra registros de la base de datos.
-     */
     @Transactional
     public void eliminar(Long archivoId) {
         if (archivoId != null && archivoRepository.existsById(archivoId)) archivoRepository.deleteById(archivoId);
     }
 
-    /**
-     * Descarga: el que lo subió, o quien puede ver el material/actividad donde está.
-     * Las entregas solo las ven el alumno, sus padres, el docente del curso y la administración.
-     */
     @Transactional(readOnly = true)
     public ArchivoAdjunto descargar(Long archivoId, Long usuarioId) {
         Usuario u = accesoService.usuario(usuarioId);
@@ -138,15 +112,11 @@ public class ArchivoService {
             try {
                 accesoService.estudianteVisible(u.getId(), e.getEstudiante().getId());
                 if (!AccesoService.esDocente(u)) return a;
-            } catch (AccesoDenegadoException ignorado) { /* sigue */ }
+            } catch (AccesoDenegadoException ignorado) {  }
         }
-        /**
-         * Devuelve acceso denegado exception.
-         */
         throw new AccesoDenegadoException("No tienes acceso a este archivo.");
     }
 
-    /** Limpia la lista de formatos que manda el docente (null/vacía = todos). */
     public static List<String> normalizarFormatos(Collection<String> formatos) {
         if (formatos == null) return List.copyOf(FORMATOS.keySet());
         List<String> res = new ArrayList<>();
@@ -159,18 +129,12 @@ public class ArchivoService {
         return res.isEmpty() ? List.copyOf(FORMATOS.keySet()) : res;
     }
 
-    /**
-     * Devuelve extensiones.
-     */
     private static Set<String> extensiones(Collection<String> formatos) {
         Set<String> ext = new HashSet<>();
         normalizarFormatos(formatos).forEach(f -> ext.addAll(FORMATOS.get(f)));
         return ext;
     }
 
-    /**
-     * Devuelve nombres formatos (como lista).
-     */
     private static List<String> nombresFormatos(Collection<String> formatos) {
         return normalizarFormatos(formatos).stream().map(f -> switch (f) {
             case "WORD" -> "Word (.doc, .docx)";
@@ -181,12 +145,11 @@ public class ArchivoService {
         }).toList();
     }
 
-    /** Revisa la "firma" (primeros bytes) para saber si el contenido corresponde a la extensión. */
     static boolean contenidoCoincide(String ext, byte[] d) {
         return switch (ext) {
-            case "pdf" -> empieza(d, 0x25, 0x50, 0x44, 0x46);                       // %PDF
-            case "docx", "xlsx", "pptx" -> empieza(d, 0x50, 0x4B);                 // ZIP (PK)
-            case "doc", "xls", "ppt" -> empieza(d, 0xD0, 0xCF, 0x11, 0xE0);         // Office 97-2003
+            case "pdf" -> empieza(d, 0x25, 0x50, 0x44, 0x46);
+            case "docx", "xlsx", "pptx" -> empieza(d, 0x50, 0x4B);
+            case "doc", "xls", "ppt" -> empieza(d, 0xD0, 0xCF, 0x11, 0xE0);
             case "png" -> empieza(d, 0x89, 0x50, 0x4E, 0x47);
             case "jpg", "jpeg" -> empieza(d, 0xFF, 0xD8, 0xFF);
             case "gif" -> empieza(d, 0x47, 0x49, 0x46, 0x38);
@@ -195,25 +158,16 @@ public class ArchivoService {
         };
     }
 
-    /**
-     * Devuelve empieza (verdadero o falso).
-     */
     private static boolean empieza(byte[] d, int... firma) {
         if (d.length < firma.length) return false;
         for (int i = 0; i < firma.length; i++) if ((d[i] & 0xFF) != firma[i]) return false;
         return true;
     }
 
-    /**
-     * Devuelve info.
-     */
     public static ArchivoDto.Info info(ArchivoAdjunto a) {
         return a == null ? null : new ArchivoDto.Info(a.getId(), a.getNombre(), a.getTipoMime(), a.getTamanio());
     }
 
-    /**
-     * Limpia nombre.
-     */
     private static String limpiarNombre(String nombre) {
         String n = nombre == null ? "" : nombre.trim();
         n = n.replace("\\", "/");

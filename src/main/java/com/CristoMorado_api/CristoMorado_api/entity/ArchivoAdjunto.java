@@ -4,12 +4,6 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import lombok.*;
 
-/**
- * Archivo subido al sistema (materiales del docente, adjuntos de actividades
- * y entregas de los alumnos). El contenido se guarda en PostgreSQL (bytea).
- * Las demás tablas solo guardan el id del archivo, así los listados no cargan
- * los bytes; se descargan con GET /api/archivos/{id}.
- */
 @Entity
 @Table(name = "archivos")
 @Getter
@@ -29,7 +23,6 @@ public class ArchivoAdjunto {
     @Column(name = "tipo_mime", nullable = false, length = 150)
     private String tipoMime;
 
-    /** Tamaño en bytes. */
     @Column(nullable = false)
     private Long tamanio;
 

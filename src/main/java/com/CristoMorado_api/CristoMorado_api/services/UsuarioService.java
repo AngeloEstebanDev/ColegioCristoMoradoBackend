@@ -19,11 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-/**
- * Vista "Administrativo". Aquí se crean las cuentas de Administración
- * (usuario libre) y de Directiva (DIR + DNI). Las de alumnos, docentes y
- * apoderados se crean solas desde su propio módulo (ALU/DOC/APO + DNI).
- */
 @Service
 public class UsuarioService {
 
@@ -35,9 +30,6 @@ public class UsuarioService {
     private final CuentaService cuentaService;
     private final PersonalRepository personalRepository;
 
-    /**
-     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
-     */
     public UsuarioService(UsuarioRepository usuarioRepository,
                           EstudianteRepository estudianteRepository,
                           DocenteRepository docenteRepository,
@@ -54,10 +46,6 @@ public class UsuarioService {
         this.cuentaService = cuentaService;
     }
 
-    /**
-     * Devuelve la lista de las cuentas de usuario, roles y permisos. Solo lee datos (transacción de
-     * solo lectura).
-     */
     @Transactional(readOnly = true)
     public List<UsuarioResponse> listar() {
         return usuarioRepository.findAll().stream()
@@ -65,21 +53,12 @@ public class UsuarioService {
                 .toList();
     }
 
-    /**
-     * Obtiene la cuenta de usuario indicado por su id. Solo lee datos (transacción de solo lectura).
-     */
     @Transactional(readOnly = true)
     public UsuarioResponse obtener(Long id) {
         Usuario u = buscarOFallar(id);
         return UsuarioResponse.fromEntity(u, vinculadoA(id));
     }
 
-    /**
-     * Crea un nuevo registro (la cuenta de usuario) con los datos recibidos. Se ejecuta en una
-     * transacción: si algo falla, no se guarda nada a medias. Si los datos no son válidos, responde
-     * con error 400 y un mensaje claro para el usuario. Si el dato ya existe (por ejemplo, un DNI o
-     * usuario repetido), responde con error 409. Guarda los cambios en la base de datos.
-     */
     @Transactional
     public UsuarioResponse crear(UsuarioRequest req, Long actorId) {
         String rol = rolObligatorio(req.rol());
@@ -106,12 +85,6 @@ public class UsuarioService {
         return UsuarioResponse.fromEntity(usuarioRepository.save(u));
     }
 
-    /**
-     * Actualiza los datos de la cuenta de usuario indicado por su id. Se ejecuta en una transacción:
-     * si algo falla, no se guarda nada a medias. Si los datos no son válidos, responde con error 400 y
-     * un mensaje claro para el usuario. Si el dato ya existe (por ejemplo, un DNI o usuario repetido),
-     * responde con error 409. Guarda los cambios en la base de datos.
-     */
     @Transactional
     public UsuarioResponse actualizar(Long id, UsuarioRequest req, Long actorId) {
         noEsSuPropiaCuenta(id, actorId, "editar");
@@ -121,8 +94,6 @@ public class UsuarioService {
         String vinculado = vinculadoA(id);
 
         if (vinculado != null) {
-            // Cuenta de alumno/docente/apoderado: el usuario (PREFIJO + DNI) y el
-            // rol dependen de su módulo; aquí solo se cambia estado y contraseña.
             if (req.rol() != null && !mismaCategoria(req.rol(), u.getRol())) {
                 throw new DatosInvalidosException("No se puede cambiar el rol de una cuenta de " + vinculado.toLowerCase()
                         + ". Gestiona sus datos desde el módulo correspondiente.");
@@ -140,7 +111,6 @@ public class UsuarioService {
         }
 
         if (req.estado() != null) u.setEstado(req.estado());
-        // Si el admin escribe una contraseña nueva, se guarda en la BD.
         if (req.password() != null && !req.password().isBlank()) {
             CuentaService.validarPassword(req.password());
             u.setPassword(req.password());
@@ -148,10 +118,6 @@ public class UsuarioService {
         return UsuarioResponse.fromEntity(usuarioRepository.save(u), vinculado);
     }
 
-    /**
-     * Cambia estado. Se ejecuta en una transacción: si algo falla, no se guarda nada a medias. Guarda
-     * los cambios en la base de datos.
-     */
     @Transactional
     public UsuarioResponse cambiarEstado(Long id, boolean estado, Long actorId) {
         noEsSuPropiaCuenta(id, actorId, "desactivar");
@@ -162,11 +128,6 @@ public class UsuarioService {
         return UsuarioResponse.fromEntity(usuarioRepository.save(u), vinculadoA(id));
     }
 
-    /**
-     * Elimina la cuenta de usuario indicado por su id. Se ejecuta en una transacción: si algo falla,
-     * no se guarda nada a medias. Si los datos no son válidos, responde con error 400 y un mensaje
-     * claro para el usuario. Borra registros de la base de datos.
-     */
     @Transactional
     public void eliminar(Long id, Long actorId) {
         noEsSuPropiaCuenta(id, actorId, "eliminar");
@@ -182,34 +143,20 @@ public class UsuarioService {
         usuarioRepository.deleteById(id);
     }
 
-    /**
-     * Cuenta activos.
-     */
     long contarActivos() {
         return usuarioRepository.countByEstadoTrue();
     }
 
-    /**
-     * Cuenta por rol.
-     */
     long contarPorRol(String rol) {
         return usuarioRepository.countByRolIgnoreCase(rol);
     }
 
-    // ------------------------------------------------------------------
-
-    /**
-     * El administrador que está usando el sistema no puede editar,
-     * desactivar ni eliminar su propia cuenta desde "Administrativo"
-     * (así nunca se queda fuera por error).
-     */
     private static void noEsSuPropiaCuenta(Long id, Long actorId, String accion) {
         if (actorId != null && actorId.equals(id)) {
             throw new AccesoDenegadoException("No puedes " + accion + " tu propia cuenta.");
         }
     }
 
-    /** Debe quedar siempre al menos un administrador activo. */
     private void noDejarSinAdministradores(Usuario u) {
         if (!RolUtil.esAdministrativo(u.getRol()) || !Boolean.TRUE.equals(u.getEstado())) return;
         long otrosAdminsActivos = usuarioRepository.findAll().stream()
@@ -223,7 +170,6 @@ public class UsuarioService {
         }
     }
 
-    /** "Alumno" / "Docente" / "Apoderado" si la cuenta pertenece a un registro de esos módulos. */
     private String vinculadoA(Long usuarioId) {
         if (estudianteRepository.findByUsuarioId(usuarioId).isPresent()) return "Alumno";
         if (docenteRepository.findByUsuarioId(usuarioId).isPresent()) return "Docente";
@@ -232,10 +178,6 @@ public class UsuarioService {
         return null;
     }
 
-    /**
-     * Devuelve nombre de usuario (como texto). Si los datos no son válidos, responde con error 400 y
-     * un mensaje claro para el usuario.
-     */
     private String nombreDeUsuario(String rol, UsuarioRequest req) {
         if (UsuarioFormato.DIRECTIVA.equals(UsuarioFormato.prefijoDeRol(rol))) {
             return cuentaService.usuarioPara(UsuarioFormato.DIRECTIVA, req.dni());
@@ -247,10 +189,6 @@ public class UsuarioService {
         return usuario;
     }
 
-    /**
-     * Rechaza roles de modulo. Si los datos no son válidos, responde con error 400 y un mensaje claro
-     * para el usuario.
-     */
     private static void rechazarRolesDeModulo(String rol) {
         String prefijo = UsuarioFormato.prefijoDeRol(rol);
         if (UsuarioFormato.ALUMNO.equals(prefijo) || UsuarioFormato.DOCENTE.equals(prefijo)
@@ -264,38 +202,26 @@ public class UsuarioService {
         }
     }
 
-    /** Solo un administrador puede crear, editar, apagar o borrar cuentas de administrador. */
     private void soloAdminTocaAdmins(String rolObjetivo, Long actorId) {
         String r = rolObjetivo == null ? "" : rolObjetivo.trim().toLowerCase();
         if (!r.equals("admin") && !r.equals("administrador")) return;
-        if (actorId == null) return; // sin actor (p.ej. pruebas internas): lo controla el interceptor
+        if (actorId == null) return;
         Usuario actor = usuarioRepository.findById(actorId).orElse(null);
         if (actor == null || !PermisoService.esAdministrador(actor)) {
             throw new AccesoDenegadoException("Solo un administrador puede gestionar cuentas de administrador.");
         }
     }
 
-    /**
-     * Devuelve misma categoría (verdadero o falso).
-     */
     private static boolean mismaCategoria(String a, String b) {
         String pa = UsuarioFormato.prefijoDeRol(a), pb = UsuarioFormato.prefijoDeRol(b);
         return pa == null ? a.equalsIgnoreCase(b) : pa.equals(pb);
     }
 
-    /**
-     * Devuelve rol obligatorio (como texto). Si los datos no son válidos, responde con error 400 y un
-     * mensaje claro para el usuario.
-     */
     private static String rolObligatorio(String rol) {
         if (rol == null || rol.isBlank()) throw new DatosInvalidosException("Selecciona un rol.");
         return rol.trim();
     }
 
-    /**
-     * Devuelve nombre obligatorio (como texto). Si los datos no son válidos, responde con error 400 y
-     * un mensaje claro para el usuario.
-     */
     private static String nombreObligatorio(String nombre) {
         if (nombre == null || nombre.trim().length() < 3) {
             throw new DatosInvalidosException("Escribe el nombre completo.");
@@ -303,10 +229,6 @@ public class UsuarioService {
         return com.CristoMorado_api.CristoMorado_api.util.Campos.parteNombre(nombre, "el nombre", 100, true);
     }
 
-    /**
-     * Busca el registro por su id; si no existe, lanza RecursoNoEncontradoException (error 404). Si no
-     * encuentra el registro, responde con error 404.
-     */
     private Usuario buscarOFallar(Long id) {
         return usuarioRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado."));

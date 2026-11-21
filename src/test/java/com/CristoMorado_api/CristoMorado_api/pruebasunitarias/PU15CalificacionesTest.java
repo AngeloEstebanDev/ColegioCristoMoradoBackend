@@ -16,7 +16,6 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-/** PU-15 – HU-16 y HU-17: Calificaciones (Épica 5, Sprint 5). NotaService.guardarNotas (escala 0 a 20). */
 @DisplayName("PU-15 – HU-16 y HU-17: Calificaciones")
 class PU15CalificacionesTest {
 
@@ -28,10 +27,6 @@ class PU15CalificacionesTest {
     private Evaluacion examen;
     private Estudiante juan;
 
-    /**
-     * Se ejecuta antes de cada prueba: crea los mocks (objetos simulados con Mockito) y los datos de
-     * ejemplo.
-     */
     @BeforeEach
     void setUp() {
         EvaluacionRepository evaluacionRepository = mock(EvaluacionRepository.class);
@@ -40,9 +35,6 @@ class PU15CalificacionesTest {
         EstudianteRepository estudianteRepository = mock(EstudianteRepository.class);
         AccesoService accesoService = mock(AccesoService.class);
         servicio = new NotaService(evaluacionRepository, notaRepository, historialRepository, mock(PeriodoRepository.class),
-                /**
-                 * Crea un objeto simulado (mock) con Mockito para usarlo en la prueba.
-                 */
                 estudianteRepository, mock(ActividadRepository.class), mock(SeccionCursoRepository.class),
                 mock(AsistenciaRepository.class), accesoService, mock(EntregaRepository.class));
         Seccion quintoA = Seccion.builder().id(8L).grado("5° Primaria").letra("A").build();
@@ -56,18 +48,10 @@ class PU15CalificacionesTest {
         when(estudianteRepository.findById(1L)).thenReturn(Optional.of(juan));
     }
 
-    /**
-     * Devuelve nota.
-     */
     private static NotaDto.GuardarNotasRequest nota(Double valor, String motivo) {
         return new NotaDto.GuardarNotasRequest(List.of(new NotaDto.Cambio(20L, 1L, valor, null)), motivo);
     }
 
-    /**
-     * Caso de prueba: PU-15.1 Nota dentro del rango configurado (0 a 20): es aceptada. Prepara los
-     * datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert). Guarda los
-     * cambios en la base de datos.
-     */
     @Test
     @DisplayName("PU-15.1 Nota dentro del rango configurado (0 a 20): es aceptada")
     void c1_notaEnRango() {
@@ -78,11 +62,6 @@ class PU15CalificacionesTest {
         verify(notaRepository, times(3)).save(any(Nota.class));
     }
 
-    /**
-     * Caso de prueba: PU-15.2 Nota inferior al mínimo (-1) o superior al máximo (21): es rechazada.
-     * Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
-     * Guarda los cambios en la base de datos.
-     */
     @Test
     @DisplayName("PU-15.2 Nota inferior al mínimo (-1) o superior al máximo (21): es rechazada")
     void c2_notaFueraDeRango() {
@@ -93,11 +72,6 @@ class PU15CalificacionesTest {
         verify(notaRepository, never()).save(any(Nota.class));
     }
 
-    /**
-     * Caso de prueba: PU-15.3 Actualización válida de una calificación (12 → 15): los datos procesados
-     * son correctos. Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado
-     * esperado (assert). Guarda los cambios en la base de datos.
-     */
     @Test
     @DisplayName("PU-15.3 Actualización válida de una calificación (12 → 15): los datos procesados son correctos")
     void c3_actualizacionValida() {

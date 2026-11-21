@@ -18,11 +18,6 @@ import com.CristoMorado_api.CristoMorado_api.config.ActividadInterceptor;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Controlador REST del inicio de sesión y la recuperación de contraseña. Recibe las peticiones HTTP
- * del frontend en las rutas que empiezan con /api/auth, revisa los datos básicos y llama al servicio
- * que tiene la lógica. Lo que devuelve cada método se convierte automáticamente a JSON.
- */
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "${app.cors.origenes}")
@@ -32,9 +27,6 @@ public class AuthController {
     private final VerificacionService verificacionService;
     private final PermisoService permisoService;
 
-    /**
-     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
-     */
     public AuthController(UsuarioRepository usuarioRepository, VerificacionService verificacionService,
                           PermisoService permisoService) {
         this.usuarioRepository = usuarioRepository;
@@ -42,11 +34,6 @@ public class AuthController {
         this.permisoService = permisoService;
     }
 
-    /**
-     * Inicio de sesión con NOMBRE DE USUARIO (ALU/DOC/APO/DIR + DNI) y contraseña.
-     * En caso de error responde {mensaje, campo} para que el login marque el
-     * campo correcto ("usuario" o "password").
-     */
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
         String nombre = request.usuario() == null ? "" : request.usuario().trim();
@@ -70,45 +57,34 @@ public class AuthController {
             return error(403, "Tu cuenta está inactiva. Para activarla, " + Soporte.ESCRIBE_A_SOPORTE + ".", null);
         }
         marcarActividad(usuario.getId(), null, "Inició sesión", "Exitoso");
-        // Se devuelve sin la contraseña y con sus permisos del panel.
         return ResponseEntity.ok(UsuarioResponse.conPermisos(usuario, null, permisoService.permisosDe(usuario)));
     }
 
-    /** "¿Olvidaste tu contraseña?" paso 1: envía un código al Gmail verificado. */
     @PostMapping("/recuperar/codigo")
     public CodigoEnviadoResponse solicitarRecuperacion(@RequestBody RecuperarRequest request) {
         return verificacionService.solicitarRecuperacion(request.usuario());
     }
 
-    /** "¿Olvidaste tu contraseña?" paso 2: código + nueva contraseña. */
     @PostMapping("/recuperar/restablecer")
     public ResponseEntity<Void> restablecer(@RequestBody RestablecerRequest request) {
         verificacionService.restablecerPassword(request.usuario(), request.codigo(), request.passwordNueva());
         return ResponseEntity.noContent().build();
     }
 
-    /** Deja los datos del inicio de sesión para "Actividad reciente" (los guarda ActividadInterceptor). */
     private static void marcarActividad(Long usuarioId, String nombreEscrito, String accion, String estado) {
         RequestAttributes attrs = RequestContextHolder.getRequestAttributes();
-        if (attrs == null) return;   // fuera de una petición web (p. ej. pruebas unitarias)
+        if (attrs == null) return;
         if (usuarioId != null) attrs.setAttribute(ActividadInterceptor.ATR_USUARIO_ID, usuarioId, RequestAttributes.SCOPE_REQUEST);
         if (nombreEscrito != null) attrs.setAttribute(ActividadInterceptor.ATR_NOMBRE, nombreEscrito, RequestAttributes.SCOPE_REQUEST);
         attrs.setAttribute(ActividadInterceptor.ATR_ACCION, accion, RequestAttributes.SCOPE_REQUEST);
         attrs.setAttribute(ActividadInterceptor.ATR_ESTADO, estado, RequestAttributes.SCOPE_REQUEST);
     }
 
-    /**
-     * Devuelve error como respuesta HTTP.
-     */
     private static ResponseEntity<Map<String, String>> error(int status, String mensaje, String campo) {
         return ResponseEntity.status(status).body(campo == null
                 ? Map.of("mensaje", mensaje)
                 : Map.of("mensaje", mensaje, "campo", campo));
     }
 
-    /**
-     * Estructura de datos LoginRequest (record): agrupa login request en un solo objeto inmutable que
-     * viaja como JSON.
-     */
     public record LoginRequest(String usuario, String password) {}
 }

@@ -22,10 +22,6 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-/**
- * PU-14 – HU-24 y HU-25: Comunicados y notificaciones (Épica 4, Sprint 4).
- * ComunicadoService.crear valida el comunicado; ComunicadoService.listar decide a quién le llega (destinatarios).
- */
 @DisplayName("PU-14 – HU-24 y HU-25: Comunicados y notificaciones")
 class PU14ComunicadosTest {
 
@@ -35,19 +31,12 @@ class PU14ComunicadosTest {
     private UsuarioRepository usuarioRepository;
     private ComunicadoService servicio;
 
-    /**
-     * Se ejecuta antes de cada prueba: crea los mocks (objetos simulados con Mockito) y los datos de
-     * ejemplo. Guarda los cambios en la base de datos.
-     */
     @BeforeEach
     void setUp() {
         comunicadoRepository = mock(ComunicadoRepository.class);
         usuarioRepository = mock(UsuarioRepository.class);
         PermisoService permisoService = mock(PermisoService.class);
         servicio = new ComunicadoService(comunicadoRepository, mock(ComunicadoLecturaRepository.class), usuarioRepository,
-                /**
-                 * Crea un objeto simulado (mock) con Mockito para usarlo en la prueba.
-                 */
                 permisoService, mock(AccesoService.class), mock(SeccionRepository.class),
                 mock(EstudianteRepository.class), mock(PadreFamiliaRepository.class));
         Usuario admin = Usuario.builder().id(1L).nombre("Paola Morales Guido").usuario("admin123").rol("ADMIN").estado(true).build();
@@ -61,18 +50,10 @@ class PU14ComunicadosTest {
         when(comunicadoRepository.existsById(100L)).thenReturn(true);
     }
 
-    /**
-     * Devuelve comunicado.
-     */
     private static ComunicadoRequest comunicado(String titulo, String contenido, List<String> grupos) {
         return new ComunicadoRequest(titulo, contenido, null, false, grupos, null);
     }
 
-    /**
-     * Caso de prueba: PU-14.1 Comunicado con los campos obligatorios completos: es válido y se
-     * pública. Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado esperado
-     * (assert). Guarda los cambios en la base de datos.
-     */
     @Test
     @DisplayName("PU-14.1 Comunicado con los campos obligatorios completos: es válido y se publica")
     void c1_comunicadoValido() {
@@ -83,11 +64,6 @@ class PU14ComunicadosTest {
         verify(comunicadoRepository, times(1)).save(any(Comunicado.class));
     }
 
-    /**
-     * Caso de prueba: PU-14.2 Comunicado sin título o sin mensaje: se rechaza. Prepara los datos
-     * (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert). Guarda los
-     * cambios en la base de datos.
-     */
     @Test
     @DisplayName("PU-14.2 Comunicado sin título o sin mensaje: se rechaza")
     void c2_sinTituloOMensaje() {
@@ -97,10 +73,6 @@ class PU14ComunicadosTest {
         verify(comunicadoRepository, never()).save(any(Comunicado.class));
     }
 
-    /**
-     * Caso de prueba: PU-14.3 Destinatarios válidos (PADRES): le llega al padre y no al alumno.
-     * Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
-     */
     @Test
     @DisplayName("PU-14.3 Destinatarios válidos (PADRES): le llega al padre y no al alumno")
     void c3_identificaDestinatarios() {

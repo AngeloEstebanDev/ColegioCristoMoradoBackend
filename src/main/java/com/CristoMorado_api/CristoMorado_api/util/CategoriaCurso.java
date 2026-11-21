@@ -3,15 +3,8 @@ package com.CristoMorado_api.CristoMorado_api.util;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * Categorías del Catálogo de Cursos. Cada curso toma el color de su categoría
- * (se usa en las secciones y en el horario).
- */
 public final class CategoriaCurso {
 
-    /**
-     * Estructura de datos Info (record): agrupa info en un solo objeto inmutable que viaja como JSON.
-     */
     public record Info(String clave, String nombre, String color) {}
 
     public static final Map<String, Info> TODAS = new LinkedHashMap<>();
@@ -27,26 +20,16 @@ public final class CategoriaCurso {
         agregar("OTROS", "Otros", "#6B7280");
     }
 
-    /**
-     * Agrega.
-     */
     private static void agregar(String clave, String nombre, String color) {
         TODAS.put(clave, new Info(clave, nombre, color));
     }
 
-    /**
-     * Constructor de CategoriaCurso.
-     */
     private CategoriaCurso() {}
 
-    /**
-     * Devuelve de.
-     */
     public static Info de(String clave) {
         return clave == null ? null : TODAS.get(clave.trim().toUpperCase());
     }
 
-    /** Posición para ordenar el catálogo por categoría. */
     public static int orden(String clave) {
         int i = 0;
         for (String k : TODAS.keySet()) {

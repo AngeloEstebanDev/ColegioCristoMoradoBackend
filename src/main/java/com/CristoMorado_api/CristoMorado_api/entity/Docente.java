@@ -6,11 +6,6 @@ import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-/**
- * Entidad Docente: representa la tabla «docentes» de la base de datos (los docentes del colegio). Cada
- * atributo es una columna y cada objeto es una fila. Hibernate (JPA) se encarga de leer y guardar
- * estos datos. Lombok genera los getters, setters y el builder para no escribirlos a mano.
- */
 @Entity
 @Table(name = "docentes")
 @Getter
@@ -27,7 +22,6 @@ public class Docente {
     @Column(name = "nombre_completo", nullable = false, length = 150)
     private String nombreCompleto;
 
-    /** DNI, CE (carné de extranjería), PASAPORTE u OTRO. El número va en "dni". */
     @Column(name = "tipo_documento", nullable = false, length = 10)
     @Builder.Default
     private String tipoDocumento = "DNI";
@@ -53,7 +47,6 @@ public class Docente {
     @Column(length = 200)
     private String direccion;
 
-    /** Área o materia principal que dicta (ej. "Matemática", "Comunicación"). */
     @Column(length = 100)
     private String especialidad;
 
@@ -67,12 +60,6 @@ public class Docente {
     @Builder.Default
     private String estado = "Activo";
 
-    /**
-     * Vínculo (opcional) con la cuenta de acceso en `usuarios` (rol DOCENTE).
-     * No es una relación JPA para mantenerlo simple: solo se guarda el id.
-     * Se usa para que este docente pueda ver "su" información en las vistas
-     * de Perfil, Mi Agenda, etc. cuando inicia sesión.
-     */
     @Column(name = "usuario_id", unique = true)
     private Long usuarioId;
 

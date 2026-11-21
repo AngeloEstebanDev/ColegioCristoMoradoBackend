@@ -22,7 +22,6 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-/** PU-20 – HU-21: Consulta de citas (Épica 6, Sprint 6). AgendaService.misCitas. */
 @DisplayName("PU-20 – HU-21: Consulta de citas")
 class PU20CitasTest {
 
@@ -35,7 +34,6 @@ class PU20CitasTest {
     private MensajeService mensajeService;
     private Usuario admin, uPadre;
 
-    /** Administración (usuario 1) atiende a padres; Luis Pérez (usuario 30) es padre de Juan (5° Primaria A). */
     @BeforeEach
     void setUp() {
         usuarioRepository = mock(UsuarioRepository.class);
@@ -44,9 +42,6 @@ class PU20CitasTest {
         disponibilidadRepository = mock(DisponibilidadRepository.class);
         mensajeService = mock(MensajeService.class);
         AccesoService acceso = new AccesoService(usuarioRepository, mock(DocenteRepository.class), mock(EstudianteRepository.class),
-                /**
-                 * Crea un objeto simulado (mock) con Mockito para usarlo en la prueba.
-                 */
                 padreRepository, mock(SeccionRepository.class), mock(SeccionCursoRepository.class));
         servicio = new AgendaService(disponibilidadRepository, citaRepository, usuarioRepository, padreRepository,
                 mock(EstudianteRepository.class), mock(PersonalRepository.class), mock(SeccionCursoRepository.class),
@@ -63,7 +58,6 @@ class PU20CitasTest {
         when(padreRepository.findByUsuarioId(PADRE)).thenReturn(Optional.of(padre));
         when(padreRepository.findAll()).thenReturn(List.of(padre));
         when(citaRepository.save(any(Cita.class))).thenAnswer(i -> i.getArgument(0));
-        // Disponibilidad de la administración: todos los días de 15:00 a 16:00, citas de 30 minutos.
         List<Disponibilidad> horario = new ArrayList<>();
         for (int dia = 1; dia <= 7; dia++) {
             horario.add(Disponibilidad.builder().id((long) dia).usuario(admin).dia(dia).horaInicio(LocalTime.of(15, 0))
@@ -72,9 +66,6 @@ class PU20CitasTest {
         when(disponibilidadRepository.findByUsuarioIdAndActivoTrue(ADMIN)).thenReturn(horario);
     }
 
-    /**
-     * Devuelve cita.
-     */
     private Cita cita(Long id, LocalDate fecha, int hora, int minuto, String estado) {
         LocalTime ini = LocalTime.of(hora, minuto);
         return Cita.builder().id(id).responsable(admin).padre(uPadre).fecha(fecha).horaInicio(ini).horaFin(ini.plusMinutes(30))
@@ -82,17 +73,10 @@ class PU20CitasTest {
                 .reprogramaciones(0).build();
     }
 
-    /**
-     * Indica si tiene lo indicado (devuelve verdadero o falso).
-     */
     private static boolean tiene(List<CitaDto.Horario> libres, LocalDate fecha, String hora) {
         return libres.stream().anyMatch(h -> h.fecha().equals(fecha) && h.horaInicio().equals(hora));
     }
 
-    /**
-     * Caso de prueba: PU-20.1 Usuario con citas registradas: se devuelven sus citas. Prepara los datos
-     * (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
-     */
     @Test
     @DisplayName("PU-20.1 Usuario con citas registradas: se devuelven sus citas")
     void c1_usuarioConCitas() {
@@ -109,10 +93,6 @@ class PU20CitasTest {
         assertEquals("PADRE", citas.get(0).miRol());
     }
 
-    /**
-     * Caso de prueba: PU-20.2 Usuario sin citas: se devuelve una lista vacía. Prepara los datos
-     * (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
-     */
     @Test
     @DisplayName("PU-20.2 Usuario sin citas: se devuelve una lista vacía")
     void c2_usuarioSinCitas() {
@@ -121,11 +101,6 @@ class PU20CitasTest {
         assertTrue(citas.isEmpty());
     }
 
-    /**
-     * Caso de prueba: PU-20.3 Identificador de usuario inválido (999 o vacío): el error se maneja
-     * correctamente. Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado
-     * esperado (assert).
-     */
     @Test
     @DisplayName("PU-20.3 Identificador de usuario inválido (999 o vacío): el error se maneja correctamente")
     void c3_idInvalido() {

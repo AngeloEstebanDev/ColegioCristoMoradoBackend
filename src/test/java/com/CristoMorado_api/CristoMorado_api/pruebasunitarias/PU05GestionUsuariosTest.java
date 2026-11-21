@@ -19,11 +19,6 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-/**
- * PU-05 – HU-04 a HU-07: Gestión de usuarios (Épica 2, Sprint 2).
- * Registro de alumnos (EstudianteService), padres (PadreFamiliaService), docentes (DocenteService)
- * y personal de la directiva (PersonalService). La cuenta de acceso (CuentaService) se simula.
- */
 @DisplayName("PU-05 – HU-04 a HU-07: Gestión de usuarios")
 class PU05GestionUsuariosTest {
 
@@ -37,10 +32,6 @@ class PU05GestionUsuariosTest {
     private PersonalService personal;
     private final Map<Long, Object> guardados = new HashMap<>();
 
-    /**
-     * Se ejecuta antes de cada prueba: crea los mocks (objetos simulados con Mockito) y los datos de
-     * ejemplo. Guarda los cambios en la base de datos.
-     */
     @BeforeEach
     void setUp() {
         estudianteRepository = mock(EstudianteRepository.class);
@@ -69,44 +60,27 @@ class PU05GestionUsuariosTest {
         personal = new PersonalService(personalRepository, cuentaService, permisoService);
     }
 
-    /**
-     * Devuelve alumno.
-     */
     private static EstudianteRequest alumno(String nombre) {
         return new EstudianteRequest(nombre, "DNI", "70000001", null, LocalDate.of(2015, 3, 10), "Masculino", "Peruana",
                 "Av. Los Olivos 123", "987654321", null, null, 2026, "Activo", null);
     }
 
-    /**
-     * Devuelve padre.
-     */
     private static PadreFamiliaRequest padre(String correo) {
         return new PadreFamiliaRequest("Juan Pérez Rojas", "DNI", "70000002", LocalDate.of(1985, 5, 1), "987654321",
                 correo, "Av. Los Olivos 123", "Activo", null);
     }
 
-    /**
-     * Devuelve docente.
-     */
     private static DocenteRequest docente(String correo) {
         return new DocenteRequest("Carlos Mendoza Ruiz", "DNI", "70000003", null, LocalDate.of(1980, 1, 15), "Masculino",
                 "987654321", correo, "Av. Universitaria 456", "Matemática", "Licenciado en Educación",
                 LocalDate.of(2020, 3, 1), "Activo", null);
     }
 
-    /**
-     * Devuelve directiva.
-     */
     private static PersonalRequest directiva(String nombres, String correo) {
         return new PersonalRequest("DNI", "70000004", nombres, "Morales", "Guido", correo, "987654321",
                 LocalDate.of(1975, 8, 20), "Directora", null);
     }
 
-    /**
-     * Caso de prueba: PU-05.1 Correo con formato correcto: es aceptado. Prepara los datos (arrange),
-     * ejecuta el método (act) y comprueba el resultado esperado (assert). Guarda los cambios en la
-     * base de datos.
-     */
     @Test
     @DisplayName("PU-05.1 Correo con formato correcto: es aceptado")
     void c1_correoCorrecto() {
@@ -116,11 +90,6 @@ class PU05GestionUsuariosTest {
         verify(padreRepository, times(1)).save(any(PadreFamilia.class));
     }
 
-    /**
-     * Caso de prueba: PU-05.2 Correo juan#colegio.com: es rechazado (padre, docente y directiva).
-     * Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
-     * Guarda los cambios en la base de datos.
-     */
     @Test
     @DisplayName("PU-05.2 Correo juan#colegio.com: es rechazado (padre, docente y directiva)")
     void c2_correoIncorrecto() {
@@ -134,11 +103,6 @@ class PU05GestionUsuariosTest {
         verify(docenteRepository, never()).save(any(Docente.class));
     }
 
-    /**
-     * Caso de prueba: PU-05.3 Datos obligatorios vacíos (nombre): la validación falla. Prepara los
-     * datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert). Guarda los
-     * cambios en la base de datos.
-     */
     @Test
     @DisplayName("PU-05.3 Datos obligatorios vacíos (nombre): la validación falla")
     void c3_obligatoriosVacios() {
@@ -149,11 +113,6 @@ class PU05GestionUsuariosTest {
         verify(estudianteRepository, never()).save(any(Estudiante.class));
     }
 
-    /**
-     * Caso de prueba: PU-05.4 Datos válidos de cada tipo (alumno, padre, docente y directiva): pasan
-     * la validación. Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado
-     * esperado (assert). Guarda los cambios en la base de datos.
-     */
     @Test
     @DisplayName("PU-05.4 Datos válidos de cada tipo (alumno, padre, docente y directiva): pasan la validación")
     void c4_datosValidosCadaTipo() {

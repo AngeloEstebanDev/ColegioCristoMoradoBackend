@@ -21,7 +21,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
-	implementation 'org.springframework.boot:spring-boot-starter-mail'   // envío de códigos por Gmail
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 
 	compileOnly 'org.projectlombok:lombok'
@@ -42,7 +42,6 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
-	// Muestra en la consola cada prueba con su resultado (evidencia de las pruebas unitarias PU-01 a PU-23).
 	testLogging {
 		events 'passed', 'failed', 'skipped'
 		exceptionFormat 'full'

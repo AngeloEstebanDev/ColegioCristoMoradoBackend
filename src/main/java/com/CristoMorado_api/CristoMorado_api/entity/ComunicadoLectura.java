@@ -5,18 +5,11 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-/** Registro de que un usuario ya leyó un comunicado. */
 @Entity
 @Table(name = "comunicado_lecturas",
         uniqueConstraints = @UniqueConstraint(
                 name = "comunicado_lecturas_unique",
                 columnNames = {"comunicado_id", "usuario_id"}))
-/**
- * Entidad ComunicadoLectura: representa la tabla «comunicado_lecturas» de la base de datos (quién leyó
- * cada comunicado). Cada atributo es una columna y cada objeto es una fila. Hibernate (JPA) se encarga
- * de leer y guardar estos datos. Lombok genera los getters, setters y el builder para no escribirlos a
- * mano.
- */
 @Getter
 @Setter
 @NoArgsConstructor

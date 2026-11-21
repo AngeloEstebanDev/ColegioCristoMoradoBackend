@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.*;
 
-/** HU-15: entrega de un alumno para una actividad (texto, enlace, archivo o respuestas del cuestionario). */
 @Entity
 @Table(name = "entregas", uniqueConstraints = @UniqueConstraint(columnNames = {"actividad_id", "estudiante_id"}))
 @Getter
@@ -49,10 +48,6 @@ public class Entrega {
     @Column(name = "archivo_tamanio")
     private Long archivoTamanio;
 
-    /**
-     * Cuestionario: respuesta por pregunta (en el orden de las preguntas; -1 = sin responder).
-     * Pregunta UNICA: índice de la opción. MULTIPLE: máscara de bits de las opciones marcadas.
-     */
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "entrega_respuestas", joinColumns = @JoinColumn(name = "entrega_id"))
     @OrderColumn(name = "posicion")
@@ -68,12 +63,10 @@ public class Entrega {
     @Builder.Default
     private Boolean tardia = false;
 
-    /** ENTREGADA | CALIFICADA */
     @Column(nullable = false, length = 20)
     @Builder.Default
     private String estado = ENTREGADA;
 
-    /** Puntaje obtenido sobre el puntaje máximo de la actividad. */
     private Double puntaje;
 
     @Column(name = "comentario_docente", columnDefinition = "TEXT")
@@ -82,12 +75,10 @@ public class Entrega {
     @Column(name = "fecha_calificacion")
     private LocalDateTime fechaCalificacion;
 
-    /** Veces que el alumno envió (no puede pasar de Actividad.intentosPermitidos). */
     @Column(nullable = false, columnDefinition = "integer default 1")
     @Builder.Default
     private Integer intentos = 1;
 
-    /** Historial: "Entrega 1", "Entrega 2"... (se borra junto con la entrega). */
     @OneToMany(mappedBy = "entrega", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("numero ASC")
     @Builder.Default

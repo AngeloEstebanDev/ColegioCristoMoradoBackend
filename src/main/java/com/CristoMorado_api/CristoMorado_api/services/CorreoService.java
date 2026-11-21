@@ -18,23 +18,6 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
-/**
- * Envía los códigos de verificación al Gmail del usuario.
- *
- * Tres formas, en este orden (application.properties):
- *  1. MAIL_RELAY_URL definida: Google Apps Script que envía desde tu Gmail por HTTPS
- *     (sirve en Render gratis, que bloquea SMTP). Ver GUIA_DESPLIEGUE.md.
- *  2. BREVO_API_KEY definida: API HTTPS de Brevo.
- *  3. Si no: Gmail por SMTP (spring.mail.*, variables MAIL_USERNAME y MAIL_PASSWORD).
- * El código solo se envía al correo: no se muestra en pantalla.
- *
- * Modo consola (solo para tu computadora): si en local.properties pones MAIL_MODO_CONSOLA=true y el
- * correo no está configurado o no se pudo enviar, el código se escribe en la consola del backend para
- * poder seguir con la demostración. En Render nunca se define, así que allí no se usa.
- *
- * Si algo falla, la consola (o los "Logs" de Render) muestra una línea que empieza con [CORREO]
- * explicando la causa exacta (secreto distinto, URL equivocada, script sin permiso, sin internet...).
- */
 @Service
 public class CorreoService {
 
@@ -46,13 +29,9 @@ public class CorreoService {
     private final String relayUrl;
     private final String relaySecreto;
     private final boolean modoConsola;
-    // Apps Script responde con una redirección (302): se sigue automáticamente.
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10))
             .followRedirects(HttpClient.Redirect.NORMAL).build();
 
-    /**
-     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
-     */
     public CorreoService(ObjectProvider<JavaMailSender> mailSender,
                          @Value("${app.correo.remitente:${spring.mail.username:}}") String remitente,
                          @Value("${app.correo.brevo-api-key:}") String brevoApiKey,
@@ -74,7 +53,6 @@ public class CorreoService {
         }
     }
 
-    /** Qué forma de envío se usará: APPS_SCRIPT, BREVO, SMTP, CONSOLA o NINGUNO (sin mostrar claves). */
     public String metodo() {
         if (!relayUrl.isEmpty()) return "APPS_SCRIPT";
         if (!brevoApiKey.isEmpty()) return "BREVO";
@@ -82,12 +60,10 @@ public class CorreoService {
         return modoConsola ? "CONSOLA" : "NINGUNO";
     }
 
-    /** Si está activo el modo consola (solo local). */
     public boolean isModoConsola() {
         return modoConsola;
     }
 
-    /** Texto para la consola al arrancar: dice qué método se usará y qué falta. */
     private String descripcion() {
         return switch (metodo()) {
             case "APPS_SCRIPT" -> "Apps Script (MAIL_RELAY_URL)" + (modoConsola ? " + modo consola si falla" : "");
@@ -99,10 +75,6 @@ public class CorreoService {
         };
     }
 
-    /**
-     * Envía el código al Gmail. El código nunca se muestra en pantalla; solo se escribe en la consola
-     * si el modo consola (local) está activo y el correo no se pudo enviar.
-     */
     public void enviarCodigo(String para, String nombre, String codigo, String motivo, int minutosValidez) {
         try {
             enviarCodigoPorCorreo(para, nombre, codigo, motivo, minutosValidez);
@@ -118,7 +90,6 @@ public class CorreoService {
         }
     }
 
-    /** Intenta el envío real con el método configurado (Apps Script, Brevo o SMTP). */
     private void enviarCodigoPorCorreo(String para, String nombre, String codigo, String motivo, int minutosValidez) {
         if (!relayUrl.isEmpty()) {
             enviarPorAppsScript(para, "Tu código de verificación: " + codigo, html(nombre, codigo, motivo, minutosValidez));
@@ -148,7 +119,6 @@ public class CorreoService {
         }
     }
 
-    /** Envío desde el Gmail del colegio con un Google Apps Script publicado como aplicación web. */
     private void enviarPorAppsScript(String para, String asunto, String html) {
         String json = "{\"secreto\":" + jsonTexto(relaySecreto) + ",\"para\":" + jsonTexto(para)
                 + ",\"asunto\":" + jsonTexto(asunto) + ",\"html\":" + jsonTexto(html)
@@ -177,7 +147,6 @@ public class CorreoService {
         }
     }
 
-    /** Traduce la respuesta del Apps Script a una causa entendible para la consola / logs de Render. */
     static String causaAppsScript(int status, String body) {
         String b = body == null ? "" : body;
         if (b.contains("no autorizado")) {
@@ -199,7 +168,6 @@ public class CorreoService {
         return "respuesta inesperada del script";
     }
 
-    /** Envío por la API HTTPS de Brevo (https://developers.brevo.com/reference/sendtransacemail). */
     private void enviarPorBrevo(String para, String nombre, String asunto, String html) {
         if (remitente == null || remitente.isBlank()) {
             throw new DatosInvalidosException("El envío de correos no está configurado. Por favor, " + Soporte.ESCRIBE_A_SOPORTE + ".");
@@ -229,7 +197,6 @@ public class CorreoService {
         }
     }
 
-    /** Texto como literal JSON (con comillas y caracteres escapados). */
     static String jsonTexto(String s) {
         StringBuilder b = new StringBuilder("\"");
         for (char c : (s == null ? "" : s).toCharArray()) {
@@ -245,9 +212,6 @@ public class CorreoService {
         return b.append('"').toString();
     }
 
-    /**
-     * Devuelve html (como texto).
-     */
     private static String html(String nombre, String codigo, String motivo, int minutos) {
         return """
                 <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;border:1px solid #E3D5C4;border-radius:12px;overflow:hidden">
@@ -264,9 +228,6 @@ public class CorreoService {
                 """.formatted(escapar(nombre), escapar(motivo), codigo, minutos);
     }
 
-    /**
-     * Devuelve escapar (como texto).
-     */
     private static String escapar(String s) {
         return s == null ? "" : s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
