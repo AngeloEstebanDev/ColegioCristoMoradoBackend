@@ -28,6 +28,10 @@ class PU09HorariosTest {
     private HorarioBloqueRepository bloqueRepository;
     private HorarioService servicio;
 
+    /**
+     * Se ejecuta antes de cada prueba: crea los mocks (objetos simulados con Mockito) y los datos de
+     * ejemplo.
+     */
     @BeforeEach
     void setUp() {
         SeccionRepository seccionRepository = mock(SeccionRepository.class);
@@ -50,10 +54,18 @@ class PU09HorariosTest {
                 .seccion(cuartoA).seccionCurso(ciencia).dia(1).horaInicio(LocalTime.of(8, 30)).horaFin(LocalTime.of(10, 0)).build()));
     }
 
+    /**
+     * Devuelve bloque.
+     */
     private static HorarioDto.GuardarRequest bloque(int dia, String inicio, String fin) {
         return new HorarioDto.GuardarRequest(List.of(new HorarioDto.BloqueRequest(64L, dia, inicio, fin)));
     }
 
+    /**
+     * Caso de prueba: PU-09.1 Dos clases del mismo docente en horarios superpuestos (otra sección): se
+     * detecta el cruce. Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado
+     * esperado (assert). Guarda los cambios en la base de datos.
+     */
     @Test
     @DisplayName("PU-09.1 Dos clases del mismo docente en horarios superpuestos (otra sección): se detecta el cruce")
     void c1_cruceDocente() {
@@ -65,6 +77,11 @@ class PU09HorariosTest {
         verify(bloqueRepository, never()).save(any(HorarioBloque.class));
     }
 
+    /**
+     * Caso de prueba: PU-09.2 Dos clases del mismo docente en horarios diferentes: no se detecta
+     * cruce. Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado esperado
+     * (assert). Guarda los cambios en la base de datos.
+     */
     @Test
     @DisplayName("PU-09.2 Dos clases del mismo docente en horarios diferentes: no se detecta cruce")
     void c2_sinCruce() {
@@ -73,6 +90,11 @@ class PU09HorariosTest {
         verify(bloqueRepository, times(1)).save(any(HorarioBloque.class));
     }
 
+    /**
+     * Caso de prueba: PU-09.3 Hora de inicio posterior a la hora de fin: la validación falla. Prepara
+     * los datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert). Guarda
+     * los cambios en la base de datos.
+     */
     @Test
     @DisplayName("PU-09.3 Hora de inicio posterior a la hora de fin: la validación falla")
     void c3_inicioPosterior() {

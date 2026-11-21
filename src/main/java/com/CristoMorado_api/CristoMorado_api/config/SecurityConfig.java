@@ -5,9 +5,15 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 
+/**
+ * Configuración SecurityConfig: ajustes generales del backend que Spring carga al arrancar.
+ */
 @Configuration
 public class SecurityConfig {
 
+    /**
+     * Crea y registra en Spring el objeto «security filter chain» para que se use en todo el backend.
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 

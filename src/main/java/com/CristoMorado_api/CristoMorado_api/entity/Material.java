@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import lombok.*;
 
-/** HU-13: material que el docente publica en uno de sus cursos (texto, archivo o enlace), dentro de una carpeta. */
+/** HU-13: material que el docente pública en uno de sus cursos (texto, archivo o enlace), dentro de una carpeta. */
 @Entity
 @Table(name = "materiales")
 @Getter

@@ -32,6 +32,10 @@ class PU17ConsultaCalificacionesTest {
     private EstudianteRepository estudianteRepository;
     private NotaRepository notaRepository;
 
+    /**
+     * Se ejecuta antes de cada prueba: crea los mocks (objetos simulados con Mockito) y los datos de
+     * ejemplo.
+     */
     @BeforeEach
     void setUp() {
         UsuarioRepository usuarioRepository = mock(UsuarioRepository.class);
@@ -42,6 +46,9 @@ class PU17ConsultaCalificacionesTest {
         AccesoService acceso = new AccesoService(usuarioRepository, mock(DocenteRepository.class), estudianteRepository,
                 mock(PadreFamiliaRepository.class), mock(SeccionRepository.class), mock(SeccionCursoRepository.class));
         servicio = new NotaService(evaluacionRepository, notaRepository, mock(NotaHistorialRepository.class), periodoRepository,
+                /**
+                 * Crea un objeto simulado (mock) con Mockito para usarlo en la prueba.
+                 */
                 estudianteRepository, mock(ActividadRepository.class), mock(SeccionCursoRepository.class),
                 mock(AsistenciaRepository.class), acceso, mock(EntregaRepository.class));
 
@@ -67,6 +74,10 @@ class PU17ConsultaCalificacionesTest {
         when(evaluacionRepository.findBySeccionCursoIdAndPeriodoIdOrderByFechaRegistroAsc(64L, 5L)).thenReturn(List.of(examen));
     }
 
+    /**
+     * Caso de prueba: PU-17.1 Estudiante existente: se obtienen sus calificaciones (Matemática 16).
+     * Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
+     */
     @Test
     @DisplayName("PU-17.1 Estudiante existente: se obtienen sus calificaciones (Matemática 16)")
     void c1_estudianteExistente() {
@@ -79,6 +90,11 @@ class PU17ConsultaCalificacionesTest {
         assertEquals(1L, b.cursosAprobados());
     }
 
+    /**
+     * Caso de prueba: PU-17.2 Estudiante inexistente: se maneja correctamente (mensaje «Alumno no
+     * encontrado.»). Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado
+     * esperado (assert).
+     */
     @Test
     @DisplayName("PU-17.2 Estudiante inexistente: se maneja correctamente (mensaje «Alumno no encontrado.»)")
     void c2_estudianteInexistente() {
@@ -88,6 +104,10 @@ class PU17ConsultaCalificacionesTest {
         verify(notaRepository, never()).findByEstudianteId(999L);
     }
 
+    /**
+     * Caso de prueba: PU-17.3 Autorización: un alumno no puede ver las notas de otro alumno. Prepara
+     * los datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
+     */
     @Test
     @DisplayName("PU-17.3 Autorización: un alumno no puede ver las notas de otro alumno")
     void c3_autorizacionRechazaDatosNoPermitidos() {

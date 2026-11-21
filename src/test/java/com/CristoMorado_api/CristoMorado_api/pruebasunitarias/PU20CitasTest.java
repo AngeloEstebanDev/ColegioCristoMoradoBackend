@@ -44,6 +44,9 @@ class PU20CitasTest {
         disponibilidadRepository = mock(DisponibilidadRepository.class);
         mensajeService = mock(MensajeService.class);
         AccesoService acceso = new AccesoService(usuarioRepository, mock(DocenteRepository.class), mock(EstudianteRepository.class),
+                /**
+                 * Crea un objeto simulado (mock) con Mockito para usarlo en la prueba.
+                 */
                 padreRepository, mock(SeccionRepository.class), mock(SeccionCursoRepository.class));
         servicio = new AgendaService(disponibilidadRepository, citaRepository, usuarioRepository, padreRepository,
                 mock(EstudianteRepository.class), mock(PersonalRepository.class), mock(SeccionCursoRepository.class),
@@ -69,6 +72,9 @@ class PU20CitasTest {
         when(disponibilidadRepository.findByUsuarioIdAndActivoTrue(ADMIN)).thenReturn(horario);
     }
 
+    /**
+     * Devuelve cita.
+     */
     private Cita cita(Long id, LocalDate fecha, int hora, int minuto, String estado) {
         LocalTime ini = LocalTime.of(hora, minuto);
         return Cita.builder().id(id).responsable(admin).padre(uPadre).fecha(fecha).horaInicio(ini).horaFin(ini.plusMinutes(30))
@@ -76,10 +82,17 @@ class PU20CitasTest {
                 .reprogramaciones(0).build();
     }
 
+    /**
+     * Indica si tiene lo indicado (devuelve verdadero o falso).
+     */
     private static boolean tiene(List<CitaDto.Horario> libres, LocalDate fecha, String hora) {
         return libres.stream().anyMatch(h -> h.fecha().equals(fecha) && h.horaInicio().equals(hora));
     }
 
+    /**
+     * Caso de prueba: PU-20.1 Usuario con citas registradas: se devuelven sus citas. Prepara los datos
+     * (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
+     */
     @Test
     @DisplayName("PU-20.1 Usuario con citas registradas: se devuelven sus citas")
     void c1_usuarioConCitas() {
@@ -96,6 +109,10 @@ class PU20CitasTest {
         assertEquals("PADRE", citas.get(0).miRol());
     }
 
+    /**
+     * Caso de prueba: PU-20.2 Usuario sin citas: se devuelve una lista vacía. Prepara los datos
+     * (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
+     */
     @Test
     @DisplayName("PU-20.2 Usuario sin citas: se devuelve una lista vacía")
     void c2_usuarioSinCitas() {
@@ -104,6 +121,11 @@ class PU20CitasTest {
         assertTrue(citas.isEmpty());
     }
 
+    /**
+     * Caso de prueba: PU-20.3 Identificador de usuario inválido (999 o vacío): el error se maneja
+     * correctamente. Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado
+     * esperado (assert).
+     */
     @Test
     @DisplayName("PU-20.3 Identificador de usuario inválido (999 o vacío): el error se maneja correctamente")
     void c3_idInvalido() {

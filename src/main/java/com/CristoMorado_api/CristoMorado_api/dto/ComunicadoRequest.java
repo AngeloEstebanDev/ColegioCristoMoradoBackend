@@ -2,6 +2,11 @@ package com.CristoMorado_api.CristoMorado_api.dto;
 
 import java.util.List;
 
+/**
+ * DTO de entrada ComunicadoRequest: datos que el frontend envía al backend (en JSON) sobre los
+ * comunicados institucionales. Un DTO (Data Transfer Object) es solo un "paquete" de datos: no tiene
+ * lógica ni se guarda directamente.
+ */
 public record ComunicadoRequest(
         String titulo,
         String contenido,

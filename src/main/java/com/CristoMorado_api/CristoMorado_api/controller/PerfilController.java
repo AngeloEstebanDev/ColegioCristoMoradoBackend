@@ -18,15 +18,26 @@ public class PerfilController {
 
     private final PerfilService perfilService;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public PerfilController(PerfilService perfilService) {
         this.perfilService = perfilService;
     }
 
+    /**
+     * Endpoint GET /api/perfil/{usuarioId} — Obtiene el perfil. La lógica está en
+     * perfilService.obtener().
+     */
     @GetMapping("/{usuarioId}")
     public PerfilResponse obtener(@PathVariable Long usuarioId) {
         return perfilService.obtener(usuarioId);
     }
 
+    /**
+     * Endpoint PUT /api/perfil/{usuarioId} — Actualiza los datos del perfil. La lógica está en
+     * perfilService.actualizar().
+     */
     @PutMapping("/{usuarioId}")
     public PerfilResponse actualizar(@PathVariable Long usuarioId, @RequestBody PerfilUpdateRequest request) {
         return perfilService.actualizar(usuarioId, request);

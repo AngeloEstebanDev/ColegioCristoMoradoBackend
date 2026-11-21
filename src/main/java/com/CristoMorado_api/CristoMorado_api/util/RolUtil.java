@@ -8,6 +8,9 @@ package com.CristoMorado_api.CristoMorado_api.util;
  */
 public final class RolUtil {
 
+    /**
+     * Lista cerrada de valores posibles para categoría.
+     */
     public enum Categoria { ADMINISTRATIVO, DOCENTE, ALUMNO, PADRE, OTRO }
 
     /** Grupos de destinatarios de un comunicado. */
@@ -17,8 +20,14 @@ public final class RolUtil {
     public static final String GRUPO_ALUMNOS = "ALUMNOS";
     public static final String GRUPO_PADRES = "PADRES";
 
+    /**
+     * Constructor de RolUtil.
+     */
     private RolUtil() {}
 
+    /**
+     * Devuelve categoría.
+     */
     public static Categoria categoria(String rol) {
         String r = rol == null ? "" : rol.trim().toLowerCase();
         return switch (r) {
@@ -30,6 +39,9 @@ public final class RolUtil {
         };
     }
 
+    /**
+     * Indica si es administrativo (devuelve verdadero o falso).
+     */
     public static boolean esAdministrativo(String rol) {
         return categoria(rol) == Categoria.ADMINISTRATIVO;
     }
@@ -45,6 +57,9 @@ public final class RolUtil {
         };
     }
 
+    /**
+     * Indica si es grupo válido (devuelve verdadero o falso).
+     */
     public static boolean esGrupoValido(String grupo) {
         return GRUPO_TODOS.equals(grupo) || GRUPO_ADMINISTRATIVO.equals(grupo)
                 || GRUPO_DOCENTES.equals(grupo) || GRUPO_ALUMNOS.equals(grupo)

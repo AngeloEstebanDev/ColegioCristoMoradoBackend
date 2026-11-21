@@ -49,6 +49,9 @@ public class AgendaService {
     private final AccesoService accesoService;
     private final MensajeService mensajeService;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public AgendaService(DisponibilidadRepository disponibilidadRepository, CitaRepository citaRepository,
                          UsuarioRepository usuarioRepository, PadreFamiliaRepository padreRepository,
                          EstudianteRepository estudianteRepository, PersonalRepository personalRepository,
@@ -70,6 +73,10 @@ public class AgendaService {
     // HU-27 Disponibilidad
     // ==================================================================
 
+    /**
+     * Devuelve mis disponibilidades del usuario que inició sesión. Solo lee datos (transacción de solo
+     * lectura).
+     */
     @Transactional(readOnly = true)
     public List<CitaDto.Disponibilidad> misDisponibilidades(Long usuarioId) {
         Usuario u = exigirResponsable(usuarioId);
@@ -77,6 +84,10 @@ public class AgendaService {
                 .map(AgendaService::disponibilidad).toList();
     }
 
+    /**
+     * Crea disponibilidad. Se ejecuta en una transacción: si algo falla, no se guarda nada a medias.
+     * Guarda los cambios en la base de datos.
+     */
     @Transactional
     public CitaDto.Disponibilidad crearDisponibilidad(Long usuarioId, CitaDto.DisponibilidadRequest req) {
         Usuario u = exigirResponsable(usuarioId);
@@ -85,6 +96,10 @@ public class AgendaService {
         return disponibilidad(disponibilidadRepository.save(d));
     }
 
+    /**
+     * Actualiza disponibilidad. Se ejecuta en una transacción: si algo falla, no se guarda nada a
+     * medias. Guarda los cambios en la base de datos.
+     */
     @Transactional
     public CitaDto.Disponibilidad actualizarDisponibilidad(Long usuarioId, Long id, CitaDto.DisponibilidadRequest req) {
         Disponibilidad d = miDisponibilidad(usuarioId, id);
@@ -92,6 +107,10 @@ public class AgendaService {
         return disponibilidad(disponibilidadRepository.save(d));
     }
 
+    /**
+     * Cambia estado disponibilidad. Se ejecuta en una transacción: si algo falla, no se guarda nada a
+     * medias. Guarda los cambios en la base de datos.
+     */
     @Transactional
     public CitaDto.Disponibilidad cambiarEstadoDisponibilidad(Long usuarioId, Long id, boolean activo) {
         Disponibilidad d = miDisponibilidad(usuarioId, id);
@@ -143,6 +162,11 @@ public class AgendaService {
         return libres(r, padre.getUsuario().getId(), null);
     }
 
+    /**
+     * Solicita la agenda: disponibilidad de atención y citas con los padres. Se ejecuta en una
+     * transacción: si algo falla, no se guarda nada a medias. Si los datos no son válidos, responde
+     * con error 400 y un mensaje claro para el usuario. Guarda los cambios en la base de datos.
+     */
     @Transactional
     public CitaDto.Cita solicitar(Long usuarioId, CitaDto.SolicitarRequest req) {
         PadreFamilia padre = accesoService.padreLogeado(usuarioId);
@@ -193,6 +217,13 @@ public class AgendaService {
         return lista;
     }
 
+    /**
+     * Programa la agenda: disponibilidad de atención y citas con los padres. Se ejecuta en una
+     * transacción: si algo falla, no se guarda nada a medias. Si no encuentra el registro, responde
+     * con error 404. Si los datos no son válidos, responde con error 400 y un mensaje claro para el
+     * usuario. Si el usuario no tiene permiso para esta acción, responde con error 403. Guarda los
+     * cambios en la base de datos.
+     */
     @Transactional
     public CitaDto.Cita programar(Long usuarioId, CitaDto.ProgramarRequest req) {
         Usuario r = exigirResponsable(usuarioId);
@@ -244,6 +275,9 @@ public class AgendaService {
     // HU-22 Mis citas
     // ==================================================================
 
+    /**
+     * Devuelve mis citas del usuario que inició sesión. Solo lee datos (transacción de solo lectura).
+     */
     @Transactional(readOnly = true)
     public List<CitaDto.Cita> misCitas(Long usuarioId) {
         Usuario u = accesoService.usuario(usuarioId);
@@ -263,6 +297,9 @@ public class AgendaService {
         return lista.stream().map(c -> cita(c, usuarioId)).toList();
     }
 
+    /**
+     * Devuelve resumen. Solo lee datos (transacción de solo lectura).
+     */
     @Transactional(readOnly = true)
     public CitaDto.Resumen resumen(Long usuarioId) {
         List<CitaDto.Cita> citas = misCitas(usuarioId);
@@ -276,6 +313,12 @@ public class AgendaService {
     // Acciones sobre una cita (HU-22 / HU-30)
     // ==================================================================
 
+    /**
+     * Confirma la agenda: disponibilidad de atención y citas con los padres. Se ejecuta en una
+     * transacción: si algo falla, no se guarda nada a medias. Si los datos no son válidos, responde
+     * con error 400 y un mensaje claro para el usuario. Si el usuario no tiene permiso para esta
+     * acción, responde con error 403.
+     */
     @Transactional
     public CitaDto.Cita confirmar(Long usuarioId, Long citaId, String observacion) {
         Cita c = cita(citaId);
@@ -387,6 +430,11 @@ public class AgendaService {
         return misDisponibilidades(usuarioId);
     }
 
+    /**
+     * Rechaza la agenda: disponibilidad de atención y citas con los padres. Se ejecuta en una
+     * transacción: si algo falla, no se guarda nada a medias. Si los datos no son válidos, responde
+     * con error 400 y un mensaje claro para el usuario.
+     */
     @Transactional
     public CitaDto.Cita rechazar(Long usuarioId, Long citaId, String motivo) {
         Cita c = cita(citaId);
@@ -400,6 +448,11 @@ public class AgendaService {
         return cita(c, usuarioId);
     }
 
+    /**
+     * Cancela la agenda: disponibilidad de atención y citas con los padres. Se ejecuta en una
+     * transacción: si algo falla, no se guarda nada a medias. Si los datos no son válidos, responde
+     * con error 400 y un mensaje claro para el usuario.
+     */
     @Transactional
     public CitaDto.Cita cancelar(Long usuarioId, Long citaId, String motivo) {
         Cita c = cita(citaId);
@@ -453,6 +506,10 @@ public class AgendaService {
         return cita(c, usuarioId);
     }
 
+    /**
+     * Marca realizada. Se ejecuta en una transacción: si algo falla, no se guarda nada a medias. Si
+     * los datos no son válidos, responde con error 400 y un mensaje claro para el usuario.
+     */
     @Transactional
     public CitaDto.Cita marcarRealizada(Long usuarioId, Long citaId, String observacion) {
         Cita c = cita(citaId);
@@ -506,6 +563,10 @@ public class AgendaService {
         return lista;
     }
 
+    /**
+     * Devuelve horario elegido. Si los datos no son válidos, responde con error 400 y un mensaje claro
+     * para el usuario.
+     */
     private CitaDto.Horario horarioElegido(Usuario r, Long padreUsuarioId, Long ignorarCitaId, LocalDate fecha, String horaInicio) {
         if (fecha == null || horaInicio == null || horaInicio.isBlank()) throw new DatosInvalidosException("Elige un horario disponible.");
         String hi = hora(horaInicio).format(HHMM);
@@ -515,6 +576,10 @@ public class AgendaService {
                 .orElseThrow(() -> new DatosInvalidosException("Ese horario ya no está disponible. Elige otro."));
     }
 
+    /**
+     * Valida horario libre. Si los datos no son válidos, responde con error 400 y un mensaje claro
+     * para el usuario.
+     */
     private void validarHorarioLibre(Usuario r, Usuario padre, LocalDate fecha, LocalTime ini, LocalTime fin, Long ignorarCitaId) {
         if (fecha == null) throw new DatosInvalidosException("Indica la fecha de la reunión.");
         if (!fin.isAfter(ini)) throw new DatosInvalidosException("La hora de fin debe ser mayor que la de inicio.");
@@ -560,6 +625,9 @@ public class AgendaService {
         return lista;
     }
 
+    /**
+     * Devuelve detalle (como texto).
+     */
     private String detalle(Usuario r) {
         if (AccesoService.esDocente(r)) {
             return accesoService.docenteDe(r.getId()).map(Docente::getEspecialidad).orElse("Docente");
@@ -568,6 +636,10 @@ public class AgendaService {
                 .filter(c -> c != null && !c.isBlank()).orElse("Administración");
     }
 
+    /**
+     * Devuelve responsable del padre. Si no encuentra el registro, responde con error 404. Si el
+     * usuario no tiene permiso para esta acción, responde con error 403.
+     */
     private Usuario responsableDelPadre(PadreFamilia padre, Long responsableId) {
         Usuario r = usuarioRepository.findById(responsableId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Responsable no encontrado."));
@@ -577,12 +649,19 @@ public class AgendaService {
         return r;
     }
 
+    /**
+     * Devuelve hijo opcional. Si los datos no son válidos, responde con error 400 y un mensaje claro
+     * para el usuario.
+     */
     private Estudiante hijoOpcional(PadreFamilia padre, Long estudianteId) {
         if (estudianteId == null) return null;
         return accesoService.hijos(padre).stream().filter(h -> h.getId().equals(estudianteId)).findFirst()
                 .orElseThrow(() -> new DatosInvalidosException("El alumno elegido no es tu hijo."));
     }
 
+    /**
+     * Agrega padres.
+     */
     private void agregarPadres(Map<Long, CitaDto.PadreContacto> mapa, Estudiante e) {
         for (EstudianteFamiliar v : e.getVinculosFamiliares()) {
             PadreFamilia p = v.getPadreFamilia();
@@ -596,6 +675,10 @@ public class AgendaService {
         }
     }
 
+    /**
+     * Comprueba que se cumpla responsable. Si el usuario no tiene permiso para esta acción, responde
+     * con error 403.
+     */
     private Usuario exigirResponsable(Long usuarioId) {
         Usuario u = accesoService.usuario(usuarioId);
         if (!AccesoService.esResponsable(u)) {
@@ -604,11 +687,19 @@ public class AgendaService {
         return u;
     }
 
+    /**
+     * Comprueba que se cumpla responsable de. Si el usuario no tiene permiso para esta acción,
+     * responde con error 403.
+     */
     private void exigirResponsableDe(Long usuarioId, Cita c) {
         accesoService.usuario(usuarioId);
         if (!c.getResponsable().getId().equals(usuarioId)) throw new AccesoDenegadoException("Esta cita no está a tu cargo.");
     }
 
+    /**
+     * Comprueba que se cumpla participante. Si el usuario no tiene permiso para esta acción, responde
+     * con error 403.
+     */
     private Usuario exigirParticipante(Long usuarioId, Cita c) {
         Usuario u = accesoService.usuario(usuarioId);
         if (!c.getResponsable().getId().equals(u.getId()) && !c.getPadre().getId().equals(u.getId())) {
@@ -617,6 +708,10 @@ public class AgendaService {
         return u;
     }
 
+    /**
+     * Devuelve mi disponibilidad del usuario que inició sesión. Si no encuentra el registro, responde
+     * con error 404. Si el usuario no tiene permiso para esta acción, responde con error 403.
+     */
     private Disponibilidad miDisponibilidad(Long usuarioId, Long id) {
         Usuario u = exigirResponsable(usuarioId);
         Disponibilidad d = disponibilidadRepository.findById(id)
@@ -625,6 +720,10 @@ public class AgendaService {
         return d;
     }
 
+    /**
+     * Aplica la agenda: disponibilidad de atención y citas con los padres. Si los datos no son
+     * válidos, responde con error 400 y un mensaje claro para el usuario.
+     */
     private void aplicar(Disponibilidad d, CitaDto.DisponibilidadRequest req) {
         if (req == null) throw new DatosInvalidosException("Faltan los datos del horario.");
         if (req.dia() == null || req.dia() < 1 || req.dia() > 6) throw new DatosInvalidosException("Elige el día (lunes a sábado).");
@@ -644,6 +743,10 @@ public class AgendaService {
         d.setLugar(NotaService.recortar(req.lugar(), 300));
     }
 
+    /**
+     * Valida cruce. Si los datos no son válidos, responde con error 400 y un mensaje claro para el
+     * usuario.
+     */
     private void validarCruce(Disponibilidad d, Integer dia, LocalTime ini, LocalTime fin) {
         for (Disponibilidad otra : disponibilidadRepository.findByUsuarioIdAndActivoTrue(d.getUsuario().getId())) {
             if (otra.getId().equals(d.getId()) || !otra.getDia().equals(dia)) continue;
@@ -658,6 +761,9 @@ public class AgendaService {
     // Respuestas y avisos
     // ==================================================================
 
+    /**
+     * Devuelve cita.
+     */
     private CitaDto.Cita cita(Cita c, Long usuarioId) {
         boolean soyResponsable = c.getResponsable().getId().equals(usuarioId);
         boolean soyPadre = c.getPadre().getId().equals(usuarioId);
@@ -689,12 +795,19 @@ public class AgendaService {
                 soyCreador && pendiente);
     }
 
+    /**
+     * Devuelve disponibilidad.
+     */
     private static CitaDto.Disponibilidad disponibilidad(Disponibilidad d) {
         int citas = (int) (Duration.between(d.getHoraInicio(), d.getHoraFin()).toMinutes() / d.getDuracionMinutos());
         return new CitaDto.Disponibilidad(d.getId(), d.getDia(), d.getHoraInicio().format(HHMM), d.getHoraFin().format(HHMM),
                 d.getDuracionMinutos(), d.getModalidad(), d.getLugar(), d.getActivo(), citas);
     }
 
+    /**
+     * Actualiza la agenda: disponibilidad de atención y citas con los padres. Guarda los cambios en la
+     * base de datos.
+     */
     private void actualizar(Cita c, Long usuarioId, String observacion) {
         c.setObservacion(observacion);
         c.setActualizadoPor(usuarioId);
@@ -702,6 +815,9 @@ public class AgendaService {
         citaRepository.save(c);
     }
 
+    /**
+     * Avisa la agenda: disponibilidad de atención y citas con los padres.
+     */
     private void avisar(Usuario destino, String asunto, String html) {
         if (destino != null && Boolean.TRUE.equals(destino.getEstado())) {
             mensajeService.enviarAviso(List.of(destino), asunto, html);
@@ -713,10 +829,17 @@ public class AgendaService {
         return Cita.SOLICITUD_PADRE.equals(c.getOrigen()) ? c.getPadre() : c.getResponsable();
     }
 
+    /**
+     * Devuelve receptor.
+     */
     private static Usuario receptor(Cita c) {
         return Cita.SOLICITUD_PADRE.equals(c.getOrigen()) ? c.getResponsable() : c.getPadre();
     }
 
+    /**
+     * Devuelve duracion. Si los datos no son válidos, responde con error 400 y un mensaje claro para
+     * el usuario.
+     */
     private static int duracion(Integer d) {
         int v = d == null ? 30 : d;
         if (!DURACIONES.contains(v)) throw new DatosInvalidosException("La duración debe ser 15, 20, 30, 45 o 60 minutos.");
@@ -731,14 +854,23 @@ public class AgendaService {
         if (!cabe) throw new DatosInvalidosException("Esa hora no está dentro de tu disponibilidad. Elige una hora disponible.");
     }
 
+    /**
+     * Devuelve otro.
+     */
     private static Usuario otro(Cita c, Usuario yo) {
         return c.getResponsable().getId().equals(yo.getId()) ? c.getPadre() : c.getResponsable();
     }
 
+    /**
+     * Devuelve pasada (verdadero o falso).
+     */
     private static boolean pasada(Cita c) {
         return LocalDateTime.of(c.getFecha(), c.getHoraFin()).isBefore(LocalDateTime.now());
     }
 
+    /**
+     * Devuelve cita. Si no encuentra el registro, responde con error 404.
+     */
     private Cita cita(Long id) {
         return citaRepository.findById(id).orElseThrow(() -> new RecursoNoEncontradoException("Cita no encontrada."));
     }
@@ -749,23 +881,39 @@ public class AgendaService {
                 + c.getHoraInicio().format(HHMM) + " a " + c.getHoraFin().format(HHMM);
     }
 
+    /**
+     * Devuelve motivo html (como texto).
+     */
     private static String motivoHtml(String motivo) {
         return motivo == null ? "" : "<p>Motivo: " + esc(motivo) + "</p>";
     }
 
+    /**
+     * Devuelve observacion html (como texto).
+     */
     private static String observacionHtml(Cita c) {
         return c.getObservacion() == null ? "" : "<p>Comentario: " + esc(c.getObservacion()) + "</p>";
     }
 
+    /**
+     * Devuelve lugar html (como texto).
+     */
     private static String lugarHtml(Cita c) {
         String modo = "VIRTUAL".equals(c.getModalidad()) ? "Virtual" : "Presencial";
         return "<p>Modalidad: " + modo + (c.getLugar() == null ? "" : " — " + esc(c.getLugar())) + "</p>";
     }
 
+    /**
+     * Devuelve esc (como texto).
+     */
     private static String esc(String t) {
         return MensajeService.escapar(t == null ? "" : t);
     }
 
+    /**
+     * Devuelve motivo (como texto). Si los datos no son válidos, responde con error 400 y un mensaje
+     * claro para el usuario.
+     */
     private static String motivo(String m) {
         String v = NotaService.recortar(m, 500);
         if (v == null) throw new DatosInvalidosException("Escribe el motivo de la reunión.");
@@ -773,6 +921,10 @@ public class AgendaService {
         return v;
     }
 
+    /**
+     * Devuelve motivo obligatorio (como texto). Si los datos no son válidos, responde con error 400 y
+     * un mensaje claro para el usuario.
+     */
     private static String motivoObligatorio(String m, String que) {
         String v = NotaService.recortar(m, 500);
         if (v == null) throw new DatosInvalidosException("Escribe el motivo de la " + que + ".");
@@ -780,12 +932,20 @@ public class AgendaService {
         return v;
     }
 
+    /**
+     * Devuelve modalidad (como texto). Si los datos no son válidos, responde con error 400 y un
+     * mensaje claro para el usuario.
+     */
     private static String modalidad(String m) {
         String v = m == null || m.isBlank() ? "PRESENCIAL" : m.trim().toUpperCase();
         if (!MODALIDADES.contains(v)) throw new DatosInvalidosException("La modalidad debe ser presencial o virtual.");
         return v;
     }
 
+    /**
+     * Devuelve hora. Si los datos no son válidos, responde con error 400 y un mensaje claro para el
+     * usuario.
+     */
     private static LocalTime hora(String valor) {
         try {
             return LocalTime.parse(valor == null ? "" : valor.trim(), HHMM);
@@ -794,6 +954,9 @@ public class AgendaService {
         }
     }
 
+    /**
+     * Devuelve primer nombre (como texto).
+     */
     private static String primerNombre(String nombre) {
         if (nombre == null || nombre.isBlank()) return "tu hijo(a)";
         return nombre.trim().split("\\s+")[0];

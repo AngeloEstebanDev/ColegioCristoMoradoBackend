@@ -39,6 +39,9 @@ public class HorarioService {
     private final EstudianteRepository estudianteRepository;
     private final MensajeService mensajeService;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public HorarioService(SeccionRepository seccionRepository, SeccionCursoRepository seccionCursoRepository,
                           HorarioBloqueRepository bloqueRepository, EstudianteRepository estudianteRepository,
                           MensajeService mensajeService) {
@@ -49,6 +52,9 @@ public class HorarioService {
         this.mensajeService = mensajeService;
     }
 
+    /**
+     * Obtiene el horario. Solo lee datos (transacción de solo lectura).
+     */
     @Transactional(readOnly = true)
     public HorarioDto.Respuesta obtener(Long seccionId) {
         Seccion s = buscar(seccionId);
@@ -144,6 +150,9 @@ public class HorarioService {
         return new ArrayList<>(res);
     }
 
+    /**
+     * Devuelve huella (como mapa clave → valor).
+     */
     private static Map<Long, Set<String>> huella(List<HorarioBloque> bloques) {
         Map<Long, Set<String>> m = new HashMap<>();
         for (HorarioBloque b : bloques) {
@@ -170,6 +179,9 @@ public class HorarioService {
 
     // ------------------------------------------------------------------
 
+    /**
+     * Devuelve respuesta.
+     */
     private HorarioDto.Respuesta respuesta(Seccion s, Turnos.Turno t) {
         List<HorarioDto.Bloque> bloques = bloqueRepository.findBySeccionId(s.getId()).stream()
                 .sorted(Comparator.comparing(HorarioBloque::getDia).thenComparing(HorarioBloque::getHoraInicio))
@@ -185,6 +197,10 @@ public class HorarioService {
                 Turnos.MINUTOS_BLOQUE, bloques);
     }
 
+    /**
+     * Devuelve turno. Si los datos no son válidos, responde con error 400 y un mensaje claro para el
+     * usuario.
+     */
     private static Turnos.Turno turno(Seccion s) {
         Turnos.Turno t = Turnos.de(s.getGrado(), s.getLetra(), s.getTurno());
         if (t == null) throw new DatosInvalidosException("La sección " + s.getLetra() + " de " + s.getGrado()
@@ -192,6 +208,10 @@ public class HorarioService {
         return t;
     }
 
+    /**
+     * Devuelve hora. Si los datos no son válidos, responde con error 400 y un mensaje claro para el
+     * usuario.
+     */
     private static LocalTime hora(String valor) {
         try {
             return LocalTime.parse(valor == null ? "" : valor.trim(), HHMM);
@@ -200,10 +220,16 @@ public class HorarioService {
         }
     }
 
+    /**
+     * Devuelve el texto de los horarios de clase.
+     */
     private static String texto(LocalTime h) {
         return h.format(HHMM);
     }
 
+    /**
+     * Busca el horario indicado por su id. Si no encuentra el registro, responde con error 404.
+     */
     private Seccion buscar(Long id) {
         return seccionRepository.findById(id).orElseThrow(() -> new RecursoNoEncontradoException("Sección no encontrada."));
     }

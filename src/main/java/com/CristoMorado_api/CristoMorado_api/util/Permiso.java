@@ -19,10 +19,16 @@ public enum Permiso {
     /** Asignar o quitar permisos al personal de la Directiva (p.ej. el Director). */
     PERMISOS;
 
+    /**
+     * Devuelve todos (como lista).
+     */
     public static List<String> todos() {
         return Arrays.stream(values()).map(Enum::name).toList();
     }
 
+    /**
+     * Indica si es válido (devuelve verdadero o falso).
+     */
     public static boolean esValido(String p) {
         return p != null && Arrays.stream(values()).anyMatch(v -> v.name().equals(p));
     }

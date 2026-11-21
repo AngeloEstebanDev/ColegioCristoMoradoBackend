@@ -7,5 +7,8 @@ public final class Soporte {
     /** Frase para los mensajes de error: "... escribe a soporte por WhatsApp al +51 983 046 253." */
     public static final String ESCRIBE_A_SOPORTE = "escribe a soporte por WhatsApp al " + WHATSAPP;
 
+    /**
+     * Constructor de Soporte.
+     */
     private Soporte() {}
 }

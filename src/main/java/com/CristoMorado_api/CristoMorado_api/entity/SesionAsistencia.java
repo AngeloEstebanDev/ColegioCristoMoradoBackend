@@ -13,6 +13,12 @@ import lombok.*;
 @Entity
 @Table(name = "sesiones_asistencia",
         uniqueConstraints = @UniqueConstraint(columnNames = {"seccion_curso_id", "fecha"}))
+/**
+ * Entidad SesionAsistencia: representa la tabla «sesiones_asistencia» de la base de datos (las clases
+ * (sesiones) en las que se toma asistencia). Cada atributo es una columna y cada objeto es una fila.
+ * Hibernate (JPA) se encarga de leer y guardar estos datos. Lombok genera los getters, setters y el
+ * builder para no escribirlos a mano.
+ */
 @Getter
 @Setter
 @NoArgsConstructor

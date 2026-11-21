@@ -28,6 +28,9 @@ public class AccesoService {
     private final SeccionRepository seccionRepository;
     private final SeccionCursoRepository seccionCursoRepository;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public AccesoService(UsuarioRepository usuarioRepository, DocenteRepository docenteRepository,
                          EstudianteRepository estudianteRepository, PadreFamiliaRepository padreRepository,
                          SeccionRepository seccionRepository, SeccionCursoRepository seccionCursoRepository) {
@@ -43,6 +46,10 @@ public class AccesoService {
     // Usuario logeado
     // ------------------------------------------------------------------
 
+    /**
+     * Devuelve usuario. Solo lee datos (transacción de solo lectura). Si el usuario no tiene permiso
+     * para esta acción, responde con error 403.
+     */
     @Transactional(readOnly = true)
     public Usuario usuario(Long usuarioId) {
         if (usuarioId == null) throw new AccesoDenegadoException("Inicia sesión para continuar.");
@@ -52,18 +59,30 @@ public class AccesoService {
         return u;
     }
 
+    /**
+     * Indica si es docente (devuelve verdadero o falso).
+     */
     public static boolean esDocente(Usuario u) {
         return RolUtil.categoria(u.getRol()) == RolUtil.Categoria.DOCENTE;
     }
 
+    /**
+     * Indica si es alumno (devuelve verdadero o falso).
+     */
     public static boolean esAlumno(Usuario u) {
         return RolUtil.categoria(u.getRol()) == RolUtil.Categoria.ALUMNO;
     }
 
+    /**
+     * Indica si es padre (devuelve verdadero o falso).
+     */
     public static boolean esPadre(Usuario u) {
         return RolUtil.categoria(u.getRol()) == RolUtil.Categoria.PADRE;
     }
 
+    /**
+     * Indica si es administrativo (devuelve verdadero o falso).
+     */
     public static boolean esAdministrativo(Usuario u) {
         return RolUtil.esAdministrativo(u.getRol());
     }
@@ -77,6 +96,10 @@ public class AccesoService {
     // Docente
     // ------------------------------------------------------------------
 
+    /**
+     * Comprueba que se cumpla docente. Solo lee datos (transacción de solo lectura). Si el usuario no
+     * tiene permiso para esta acción, responde con error 403.
+     */
     @Transactional(readOnly = true)
     public Usuario exigirDocente(Long usuarioId) {
         Usuario u = usuario(usuarioId);
@@ -93,6 +116,9 @@ public class AccesoService {
         return sc;
     }
 
+    /**
+     * Indica si es docente de (devuelve verdadero o falso).
+     */
     public static boolean esDocenteDe(Long usuarioId, SeccionCurso sc) {
         return sc.getDocente() != null && usuarioId != null && usuarioId.equals(sc.getDocente().getUsuarioId());
     }
@@ -114,6 +140,9 @@ public class AccesoService {
         return ids;
     }
 
+    /**
+     * Devuelve docente de (puede venir vacío). Solo lee datos (transacción de solo lectura).
+     */
     @Transactional(readOnly = true)
     public Optional<Docente> docenteDe(Long usuarioId) {
         return docenteRepository.findByUsuarioId(usuarioId);
@@ -123,6 +152,10 @@ public class AccesoService {
     // Alumno y padre
     // ------------------------------------------------------------------
 
+    /**
+     * Devuelve alumno logeado. Solo lee datos (transacción de solo lectura). Si el usuario no tiene
+     * permiso para esta acción, responde con error 403.
+     */
     @Transactional(readOnly = true)
     public Estudiante alumnoLogeado(Long usuarioId) {
         usuario(usuarioId);
@@ -130,6 +163,10 @@ public class AccesoService {
                 .orElseThrow(() -> new AccesoDenegadoException("Esta opción es solo para alumnos."));
     }
 
+    /**
+     * Devuelve padre logeado. Solo lee datos (transacción de solo lectura). Si el usuario no tiene
+     * permiso para esta acción, responde con error 403.
+     */
     @Transactional(readOnly = true)
     public PadreFamilia padreLogeado(Long usuarioId) {
         usuario(usuarioId);
@@ -176,6 +213,9 @@ public class AccesoService {
             Optional<Seccion> s = seccionDe(e);
             if (s.isPresent() && seccionesDelDocente(u.getId()).contains(s.get().getId())) return e;
         }
+        /**
+         * Devuelve acceso denegado exception.
+         */
         throw new AccesoDenegadoException("No tienes acceso a la información de este alumno.");
     }
 
@@ -183,6 +223,10 @@ public class AccesoService {
     // Secciones y cursos
     // ------------------------------------------------------------------
 
+    /**
+     * Devuelve sección curso. Solo lee datos (transacción de solo lectura). Si no encuentra el
+     * registro, responde con error 404.
+     */
     @Transactional(readOnly = true)
     public SeccionCurso seccionCurso(Long id) {
         if (id == null) throw new RecursoNoEncontradoException("Curso no encontrado.");
@@ -190,6 +234,9 @@ public class AccesoService {
                 .orElseThrow(() -> new RecursoNoEncontradoException("Curso no encontrado."));
     }
 
+    /**
+     * Devuelve sección de (puede venir vacío). Solo lee datos (transacción de solo lectura).
+     */
     @Transactional(readOnly = true)
     public Optional<Seccion> seccionDe(Estudiante e) {
         if (e.getGrado() == null || e.getSeccion() == null || e.getGrado().isBlank() || e.getSeccion().isBlank()) {
@@ -198,6 +245,9 @@ public class AccesoService {
         return seccionRepository.findByGradoAndLetra(e.getGrado(), e.getSeccion());
     }
 
+    /**
+     * Indica si está en (devuelve verdadero o falso).
+     */
     public static boolean estaEn(Estudiante e, Seccion s) {
         return Objects.equals(e.getGrado(), s.getGrado()) && Objects.equals(e.getSeccion(), s.getLetra());
     }
@@ -236,6 +286,10 @@ public class AccesoService {
         return false;
     }
 
+    /**
+     * Devuelve curso visible. Solo lee datos (transacción de solo lectura). Si el usuario no tiene
+     * permiso para esta acción, responde con error 403.
+     */
     @Transactional(readOnly = true)
     public SeccionCurso cursoVisible(Long usuarioId, Long seccionCursoId) {
         Usuario u = usuario(usuarioId);
@@ -249,6 +303,9 @@ public class AccesoService {
         return s.getGrado() + " " + s.getLetra();
     }
 
+    /**
+     * Devuelve salon (como texto).
+     */
     public static String salon(Estudiante e) {
         if (e.getGrado() == null || e.getGrado().isBlank()) return "Sin matrícula";
         return e.getGrado() + (e.getSeccion() == null ? "" : " " + e.getSeccion());

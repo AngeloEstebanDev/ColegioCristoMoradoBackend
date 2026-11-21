@@ -17,8 +17,14 @@ public final class UsuarioFormato {
     public static final String APODERADO = "APO";
     public static final String DIRECTIVA = "DIR";
 
+    /**
+     * Constructor de UsuarioFormato.
+     */
     private UsuarioFormato() {}
 
+    /**
+     * Genera.
+     */
     public static String generar(String prefijo, String dni) {
         return prefijo + limpiarDni(dni);
     }
@@ -28,6 +34,9 @@ public final class UsuarioFormato {
         return dni == null ? "" : dni.trim().replace(" ", "").toUpperCase();
     }
 
+    /**
+     * Devuelve dni válido (verdadero o falso).
+     */
     public static boolean dniValido(String dni) {
         return limpiarDni(dni).matches("[0-9A-Z]{6,15}");
     }

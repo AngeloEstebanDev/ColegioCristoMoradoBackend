@@ -15,6 +15,10 @@ import java.util.List;
  */
 public final class Turnos {
 
+    /**
+     * Estructura de datos Turno (record): agrupa turno en un solo objeto inmutable que viaja como
+     * JSON.
+     */
     public record Turno(String nombre, LocalTime inicio, LocalTime fin, LocalTime recesoInicio, LocalTime recesoFin) {}
 
     public static final int MINUTOS_BLOQUE = 15;
@@ -26,8 +30,14 @@ public final class Turnos {
     private static final Turno TURNO_TARDE = new Turno(TARDE,
             LocalTime.of(13, 30), LocalTime.of(19, 45), LocalTime.of(16, 15), LocalTime.of(16, 45));
 
+    /**
+     * Constructor de Turnos.
+     */
     private Turnos() {}
 
+    /**
+     * Indica si es secundaria (devuelve verdadero o falso).
+     */
     public static boolean esSecundaria(String grado) {
         return grado != null && grado.contains("Secundaria");
     }

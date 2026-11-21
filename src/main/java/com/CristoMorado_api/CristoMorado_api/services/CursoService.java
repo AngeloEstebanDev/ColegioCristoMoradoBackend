@@ -25,6 +25,9 @@ public class CursoService {
     private final CursoRepository cursoRepository;
     private final SeccionCursoRepository seccionCursoRepository;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public CursoService(CursoRepository cursoRepository, SeccionCursoRepository seccionCursoRepository) {
         this.cursoRepository = cursoRepository;
         this.seccionCursoRepository = seccionCursoRepository;
@@ -40,6 +43,11 @@ public class CursoService {
                 .toList();
     }
 
+    /**
+     * Crea un nuevo registro (el curso) con los datos recibidos. Se ejecuta en una transacción: si
+     * algo falla, no se guarda nada a medias. Si el dato ya existe (por ejemplo, un DNI o usuario
+     * repetido), responde con error 409. Guarda los cambios en la base de datos.
+     */
     @Transactional
     public CursoResponse crear(CursoRequest req) {
         String nombre = nombre(req);
@@ -60,6 +68,11 @@ public class CursoService {
         return CursoResponse.fromEntity(c, seccionCursoRepository.countByCursoId(c.getId()));
     }
 
+    /**
+     * Actualiza los datos del curso indicado por su id. Se ejecuta en una transacción: si algo falla,
+     * no se guarda nada a medias. Si el dato ya existe (por ejemplo, un DNI o usuario repetido),
+     * responde con error 409. Guarda los cambios en la base de datos.
+     */
     @Transactional
     public CursoResponse actualizar(Long id, CursoRequest req) {
         Curso c = buscar(id);
@@ -93,6 +106,10 @@ public class CursoService {
         return usos;
     }
 
+    /**
+     * Devuelve nombre (como texto). Si los datos no son válidos, responde con error 400 y un mensaje
+     * claro para el usuario.
+     */
     private static String nombre(CursoRequest req) {
         String n = req == null || req.nombre() == null ? "" : req.nombre().trim().replaceAll("\\s+", " ");
         if (n.isEmpty()) throw new DatosInvalidosException("Ingresa el nombre del curso.");
@@ -101,12 +118,19 @@ public class CursoService {
         return n;
     }
 
+    /**
+     * Devuelve categoría. Si los datos no son válidos, responde con error 400 y un mensaje claro para
+     * el usuario.
+     */
     private static CategoriaCurso.Info categoria(CursoRequest req) {
         CategoriaCurso.Info cat = CategoriaCurso.de(req == null ? null : req.categoria());
         if (cat == null) throw new DatosInvalidosException("Selecciona una categoría.");
         return cat;
     }
 
+    /**
+     * Busca el curso indicado por su id. Si no encuentra el registro, responde con error 404.
+     */
     private Curso buscar(Long id) {
         return cursoRepository.findById(id)
                 .filter(c -> "Activo".equals(c.getEstado()))

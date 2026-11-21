@@ -8,6 +8,12 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Entidad PadreFamilia: representa la tabla «padres_familia» de la base de datos (los padres de
+ * familia o apoderados). Cada atributo es una columna y cada objeto es una fila. Hibernate (JPA) se
+ * encarga de leer y guardar estos datos. Lombok genera los getters, setters y el builder para no
+ * escribirlos a mano.
+ */
 @Entity
 @Table(name = "padres_familia")
 @Getter

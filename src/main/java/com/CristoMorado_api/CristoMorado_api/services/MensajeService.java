@@ -50,6 +50,9 @@ public class MensajeService {
     private final DocenteRepository docenteRepository;
     private final SeccionCursoRepository seccionCursoRepository;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public MensajeService(MensajeRepository mensajeRepository,
                           MensajeDestinatarioRepository destinatarioRepository,
                           UsuarioRepository usuarioRepository,
@@ -70,6 +73,9 @@ public class MensajeService {
     // Contactos
     // ------------------------------------------------------------------
 
+    /**
+     * Devuelve contactos. Solo lee datos (transacción de solo lectura).
+     */
     @Transactional(readOnly = true)
     public ContactosResponse contactos(Long usuarioId) {
         Usuario yo = buscarUsuario(usuarioId);
@@ -151,6 +157,9 @@ public class MensajeService {
         return new ContactosResponse(contactos, List.of());
     }
 
+    /**
+     * Indica si puede escribir a (devuelve verdadero o falso).
+     */
     private boolean puedeEscribirA(Categoria yo, String miSalon, Set<String> misSalones, Categoria otro,
                                    String salonOtro, Set<String> salonesHijosOtro) {
         return switch (yo) {
@@ -187,6 +196,9 @@ public class MensajeService {
         return res;
     }
 
+    /**
+     * Devuelve salon (como texto).
+     */
     private static String salon(Estudiante e) {
         if (e.getGrado() == null || e.getSeccion() == null) return null;   // sin matrícula
         return e.getGrado() + " " + e.getSeccion();
@@ -196,6 +208,9 @@ public class MensajeService {
     // Bandejas
     // ------------------------------------------------------------------
 
+    /**
+     * Devuelve recibidos (como lista). Solo lee datos (transacción de solo lectura).
+     */
     @Transactional(readOnly = true)
     public List<MensajeResponse> recibidos(Long usuarioId) {
         buscarUsuario(usuarioId);
@@ -235,6 +250,9 @@ public class MensajeService {
         }
     }
 
+    /**
+     * Devuelve enviados (como lista). Solo lee datos (transacción de solo lectura).
+     */
     @Transactional(readOnly = true)
     public List<MensajeResponse> enviados(Long usuarioId) {
         buscarUsuario(usuarioId);
@@ -243,6 +261,12 @@ public class MensajeService {
                 .toList();
     }
 
+    /**
+     * Envía los mensajes internos. Se ejecuta en una transacción: si algo falla, no se guarda nada a
+     * medias. Si no encuentra el registro, responde con error 404. Si los datos no son válidos,
+     * responde con error 400 y un mensaje claro para el usuario. Si el usuario no tiene permiso para
+     * esta acción, responde con error 403. Guarda los cambios en la base de datos.
+     */
     @Transactional
     public MensajeResponse enviar(Long usuarioId, MensajeRequest req) {
         Usuario yo = buscarUsuario(usuarioId);
@@ -314,6 +338,9 @@ public class MensajeService {
     // Borradores (solo los ve su autor; no llegan a nadie hasta enviarlos)
     // ------------------------------------------------------------------
 
+    /**
+     * Devuelve borradores (como lista). Solo lee datos (transacción de solo lectura).
+     */
     @Transactional(readOnly = true)
     public List<BorradorDto.Borrador> borradores(Long usuarioId) {
         buscarUsuario(usuarioId);
@@ -321,6 +348,11 @@ public class MensajeService {
                 .map(MensajeService::borrador).toList();
     }
 
+    /**
+     * Guarda borrador. Se ejecuta en una transacción: si algo falla, no se guarda nada a medias. Si no
+     * encuentra el registro, responde con error 404. Si los datos no son válidos, responde con error
+     * 400 y un mensaje claro para el usuario. Guarda los cambios en la base de datos.
+     */
     @Transactional
     public BorradorDto.Borrador guardarBorrador(Long usuarioId, BorradorDto.Request req) {
         Usuario yo = buscarUsuario(usuarioId);
@@ -348,12 +380,19 @@ public class MensajeService {
         return borrador(borradorRepository.save(b));
     }
 
+    /**
+     * Elimina borrador. Se ejecuta en una transacción: si algo falla, no se guarda nada a medias. Si
+     * no encuentra el registro, responde con error 404. Borra registros de la base de datos.
+     */
     @Transactional
     public void eliminarBorrador(Long usuarioId, Long id) {
         borradorRepository.delete(borradorRepository.findByIdAndUsuarioId(id, usuarioId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Borrador no encontrado.")));
     }
 
+    /**
+     * Devuelve borrador.
+     */
     private static BorradorDto.Borrador borrador(MensajeBorrador b) {
         Usuario d = b.getDestinatario();
         return new BorradorDto.Borrador(b.getId(), d == null ? null : d.getId(), d == null ? null : d.getNombre(),
@@ -361,6 +400,10 @@ public class MensajeService {
                 b.getFechaActualizacion());
     }
 
+    /**
+     * Marca leido. Se ejecuta en una transacción: si algo falla, no se guarda nada a medias. Si no
+     * encuentra el registro, responde con error 404. Guarda los cambios en la base de datos.
+     */
     @Transactional
     public void marcarLeido(Long mensajeId, Long usuarioId) {
         MensajeDestinatario d = destinatarioRepository.findByMensajeIdAndDestinatarioId(mensajeId, usuarioId)
@@ -405,6 +448,9 @@ public class MensajeService {
         }
     }
 
+    /**
+     * Cuenta no leidos. Solo lee datos (transacción de solo lectura).
+     */
     @Transactional(readOnly = true)
     public long contarNoLeidos(Long usuarioId) {
         return destinatarioRepository.countByDestinatarioIdAndLeidoFalseAndEliminadoFalse(usuarioId);
@@ -538,6 +584,9 @@ public class MensajeService {
         return texto.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
     }
 
+    /**
+     * Convierte los datos a html.
+     */
     private static String aHtml(String texto) {
         return escapar(texto).replace("\r\n", "\n").replace("\n", "<br>");
     }
@@ -548,6 +597,9 @@ public class MensajeService {
         return m.getRemitente() == null ? ChatDto.ELIMINADO : m.getRemitente().getId();
     }
 
+    /**
+     * Tipo auxiliar Acumulado: acumulado.
+     */
     private static class Acumulado {
         Mensaje ultimo;
         boolean ultimoEsMio;
@@ -555,6 +607,9 @@ public class MensajeService {
         long noLeidos;
         boolean meEscribio;
 
+        /**
+         * Agrega un nuevo registro (el mensaje) con los datos recibidos.
+         */
         void agregar(Mensaje m, boolean mio, Usuario otro) {
             if (otro != null) usuario = otro;
             if (ultimo == null || m.getFechaEnvio().isAfter(ultimo.getFechaEnvio())
@@ -572,6 +627,9 @@ public class MensajeService {
         return mapa;
     }
 
+    /**
+     * Devuelve cabecera.
+     */
     private ChatDto.Conversacion cabecera(Long otroId, Usuario otro, Map<Long, Contacto> ctx, Mensaje ultimo,
                                           boolean ultimoEsMio, long noLeidos, boolean meEscribio) {
         String resumen = ultimo == null ? "" : resumen(ultimo);
@@ -593,6 +651,9 @@ public class MensajeService {
                 detalle, resumen, ultimoEsMio, fecha, noLeidos, puede);
     }
 
+    /**
+     * Devuelve burbuja.
+     */
     private ChatDto.MensajeChat burbuja(Mensaje m, boolean mio, boolean leido) {
         String asunto = m.getAsunto();
         if (asunto == null || asunto.isBlank() || ASUNTO_CHAT.equals(asunto) || "(Sin asunto)".equals(asunto)) asunto = null;
@@ -615,10 +676,16 @@ public class MensajeService {
 
     // ------------------------------------------------------------------
 
+    /**
+     * Devuelve respuesta.
+     */
     private MensajeResponse respuesta(Mensaje m, String bandeja, Boolean leido) {
         Usuario r = m.getRemitente();
         Participante remitente = r == null
                 ? (Boolean.TRUE.equals(m.getAvisoSistema())
+                    /**
+                     * Devuelve participante.
+                     */
                     ? new Participante(null, NOMBRE_AVISOS, "Colegio", true)
                     : new Participante(null, "Usuario eliminado", "", true))
                 : new Participante(r.getId(), r.getNombre(), RolUtil.etiqueta(r.getRol()), true);
@@ -630,6 +697,10 @@ public class MensajeService {
                 m.getRespuestaAId(), remitente, destinatarios, leido, bandeja);
     }
 
+    /**
+     * Busca usuario. Si no encuentra el registro, responde con error 404. Si los datos no son válidos,
+     * responde con error 400 y un mensaje claro para el usuario.
+     */
     private Usuario buscarUsuario(Long id) {
         if (id == null) throw new DatosInvalidosException("Falta el usuario.");
         return usuarioRepository.findById(id)

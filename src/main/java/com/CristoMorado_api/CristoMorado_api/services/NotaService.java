@@ -39,6 +39,9 @@ public class NotaService {
     private final AccesoService accesoService;
     private final EntregaRepository entregaRepository;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public NotaService(EvaluacionRepository evaluacionRepository, NotaRepository notaRepository,
                        NotaHistorialRepository historialRepository, PeriodoRepository periodoRepository,
                        EstudianteRepository estudianteRepository, ActividadRepository actividadRepository,
@@ -67,6 +70,11 @@ public class NotaService {
         return construirRegistro(sc, elegirPeriodo(periodoId));
     }
 
+    /**
+     * Crea evaluación. Se ejecuta en una transacción: si algo falla, no se guarda nada a medias. Si no
+     * encuentra el registro, responde con error 404. Si los datos no son válidos, responde con error
+     * 400 y un mensaje claro para el usuario. Guarda los cambios en la base de datos.
+     */
     @Transactional
     public NotaDto.Registro crearEvaluacion(Long usuarioId, Long seccionCursoId, NotaDto.EvaluacionRequest req) {
         SeccionCurso sc = accesoService.cursoDelDocente(usuarioId, seccionCursoId);
@@ -81,6 +89,11 @@ public class NotaService {
         return construirRegistro(sc, p);
     }
 
+    /**
+     * Actualiza evaluación. Se ejecuta en una transacción: si algo falla, no se guarda nada a medias.
+     * Si los datos no son válidos, responde con error 400 y un mensaje claro para el usuario. Guarda
+     * los cambios en la base de datos.
+     */
     @Transactional
     public NotaDto.Registro actualizarEvaluacion(Long usuarioId, Long evaluacionId, NotaDto.EvaluacionRequest req) {
         Evaluacion ev = evaluacion(evaluacionId);
@@ -150,6 +163,9 @@ public class NotaService {
         return construirRegistro(sc, periodo);
     }
 
+    /**
+     * Devuelve historial curso (como lista). Solo lee datos (transacción de solo lectura).
+     */
     @Transactional(readOnly = true)
     public List<NotaDto.CambioHistorial> historialCurso(Long usuarioId, Long seccionCursoId, Long periodoId) {
         SeccionCurso sc = cursoParaLeer(usuarioId, seccionCursoId);
@@ -249,22 +265,35 @@ public class NotaService {
     // Boleta del alumno (HU-20) e historial académico (HU-21)
     // ==================================================================
 
+    /**
+     * Devuelve boleta. Solo lee datos (transacción de solo lectura).
+     */
     @Transactional(readOnly = true)
     public NotaDto.Boleta boleta(Long usuarioId, Long estudianteId, Integer anio) {
         Estudiante e = accesoService.estudianteVisible(usuarioId, estudianteId);
         return construirBoleta(e, anio);
     }
 
+    /**
+     * Devuelve mi boleta del usuario que inició sesión. Solo lee datos (transacción de solo lectura).
+     */
     @Transactional(readOnly = true)
     public NotaDto.Boleta miBoleta(Long usuarioId, Integer anio) {
         return construirBoleta(accesoService.alumnoLogeado(usuarioId), anio);
     }
 
+    /**
+     * Devuelve historial. Solo lee datos (transacción de solo lectura).
+     */
     @Transactional(readOnly = true)
     public NotaDto.Historial historial(Long usuarioId, Long estudianteId) {
         return construirHistorial(accesoService.estudianteVisible(usuarioId, estudianteId));
     }
 
+    /**
+     * Devuelve mi historial del usuario que inició sesión. Solo lee datos (transacción de solo
+     * lectura).
+     */
     @Transactional(readOnly = true)
     public NotaDto.Historial miHistorial(Long usuarioId) {
         return construirHistorial(accesoService.alumnoLogeado(usuarioId));
@@ -279,6 +308,9 @@ public class NotaService {
 
     // ------------------------------------------------------------------
 
+    /**
+     * Construye registro.
+     */
     private NotaDto.Registro construirRegistro(SeccionCurso sc, Periodo p) {
         Seccion s = sc.getSeccion();
         List<NotaDto.PeriodoCorto> periodos = periodosOrdenados().stream().map(NotaService::corto).toList();
@@ -337,13 +369,22 @@ public class NotaService {
                 aprobados, desaprobados, sinNotas);
     }
 
+    /**
+     * Devuelve filas sin notas (como lista).
+     */
     private List<NotaDto.FilaAlumno> filasSinNotas(Seccion s) {
         return accesoService.alumnosDe(s).stream()
                 .map(e -> new NotaDto.FilaAlumno(e.getId(), e.getNombreCompleto(), Map.of(), Map.of(), Calificacion.promedio(null),
+                        /**
+                         * Devuelve foto.
+                         */
                         null, foto(e)))
                 .toList();
     }
 
+    /**
+     * Devuelve promedios por alumno (como mapa clave → valor).
+     */
     private Map<Long, Double> promediosPorAlumno(List<Evaluacion> evs, Collection<Estudiante> alumnos) {
         if (evs.isEmpty()) return Map.of();
         Map<Long, Integer> pesos = evs.stream().filter(ev -> ev.getActividadId() == null)
@@ -363,6 +404,9 @@ public class NotaService {
         return res;
     }
 
+    /**
+     * Guarda nota. Guarda los cambios en la base de datos. Borra registros de la base de datos.
+     */
     private void guardarNota(Evaluacion ev, Estudiante e, Double valor, String comentario, Usuario u,
                              String motivo, Nota actual) {
         if (valor == null) {
@@ -390,6 +434,9 @@ public class NotaService {
         notaRepository.save(actual);
     }
 
+    /**
+     * Realiza la operación «historial». Guarda los cambios en la base de datos.
+     */
     private void historial(Long evaluacionId, Long estudianteId, Double antes, Double despues, String motivo, Usuario u) {
         historialRepository.save(NotaHistorial.builder()
                 .evaluacionId(evaluacionId).estudianteId(estudianteId)
@@ -398,6 +445,9 @@ public class NotaService {
                 .build());
     }
 
+    /**
+     * Construye boleta.
+     */
     private NotaDto.Boleta construirBoleta(Estudiante e, Integer anioPedido) {
         int anioActual = LocalDate.now().getYear();
         List<Nota> todas = notaRepository.findByEstudianteId(e.getId());
@@ -482,6 +532,9 @@ public class NotaService {
                 Calificacion.promedio(Calificacion.simple(anuales)), aprobados, desaprobados);
     }
 
+    /**
+     * Construye historial.
+     */
     private NotaDto.Historial construirHistorial(Estudiante e) {
         int anioActual = LocalDate.now().getYear();
         TreeSet<Integer> anios = new TreeSet<>(Comparator.reverseOrder());
@@ -509,13 +562,24 @@ public class NotaService {
         return new NotaDto.Historial(e.getId(), e.getNombreCompleto(), e.getGrado(), e.getSeccion(), e.getAnioIngreso(), lista);
     }
 
+    /**
+     * Devuelve curso para leer. Si el usuario no tiene permiso para esta acción, responde con error
+     * 403.
+     */
     private SeccionCurso cursoParaLeer(Long usuarioId, Long seccionCursoId) {
         Usuario u = accesoService.usuario(usuarioId);
         SeccionCurso sc = accesoService.seccionCurso(seccionCursoId);
         if (AccesoService.esDocenteDe(u.getId(), sc) || AccesoService.esAdministrativo(u)) return sc;
+        /**
+         * Devuelve acceso denegado exception.
+         */
         throw new AccesoDenegadoException("Este curso no está a tu cargo.");
     }
 
+    /**
+     * Aplica el registro de notas y las boletas. Si los datos no son válidos, responde con error 400 y
+     * un mensaje claro para el usuario.
+     */
     private void aplicar(Evaluacion ev, NotaDto.EvaluacionRequest req) {
         String nombre = req.nombre() == null ? "" : req.nombre().trim().replaceAll("\\s+", " ");
         if (nombre.isEmpty()) throw new DatosInvalidosException("Escribe el nombre de la evaluación.");
@@ -530,6 +594,9 @@ public class NotaService {
         ev.setFecha(req.fecha() == null ? LocalDate.now() : req.fecha());
     }
 
+    /**
+     * Devuelve evaluación. Si no encuentra el registro, responde con error 404.
+     */
     private Evaluacion evaluacion(Long id) {
         if (id == null) throw new RecursoNoEncontradoException("Evaluación no encontrada.");
         return evaluacionRepository.findById(id).orElseThrow(() -> new RecursoNoEncontradoException("Evaluación no encontrada."));
@@ -565,6 +632,9 @@ public class NotaService {
                 .toList();
     }
 
+    /**
+     * Devuelve corto.
+     */
     public static NotaDto.PeriodoCorto corto(Periodo p) {
         return new NotaDto.PeriodoCorto(p.getId(), p.getNombre(), p.getAnio(), p.getBimestre(), p.vigenteEn(LocalDate.now()));
     }
@@ -628,10 +698,16 @@ public class NotaService {
         return new CalculoParticipacion(acts, detalle, promedios, primera);
     }
 
+    /**
+     * Devuelve foto (como texto).
+     */
     static String foto(Estudiante e) {
         return e.getUsuario() == null ? null : e.getUsuario().getFoto();
     }
 
+    /**
+     * Recorta el registro de notas y las boletas.
+     */
     static String recortar(String texto, int max) {
         if (texto == null) return null;
         String t = texto.trim();

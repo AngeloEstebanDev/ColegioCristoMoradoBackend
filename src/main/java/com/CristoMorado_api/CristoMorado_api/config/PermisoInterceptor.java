@@ -42,10 +42,16 @@ public class PermisoInterceptor implements HandlerInterceptor {
 
     private final PermisoService permisoService;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public PermisoInterceptor(PermisoService permisoService) {
         this.permisoService = permisoService;
     }
 
+    /**
+     * Se ejecuta antes de cada petición HTTP, antes de llegar al controlador.
+     */
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         String metodo = request.getMethod();

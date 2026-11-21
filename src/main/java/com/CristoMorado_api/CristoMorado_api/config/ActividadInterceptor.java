@@ -22,10 +22,16 @@ public class ActividadInterceptor implements HandlerInterceptor {
 
     private final ActividadLogService actividad;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public ActividadInterceptor(ActividadLogService actividad) {
         this.actividad = actividad;
     }
 
+    /**
+     * Se ejecuta después de responder cada petición HTTP.
+     */
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
         String metodo = request.getMethod();
@@ -52,6 +58,9 @@ public class ActividadInterceptor implements HandlerInterceptor {
         actividad.registrar(usuarioId(request), null, desc[0], accion, estado);
     }
 
+    /**
+     * Devuelve usuario id.
+     */
     private static Long usuarioId(HttpServletRequest request) {
         String v = request.getHeader("X-Usuario-Id");
         try {

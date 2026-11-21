@@ -14,11 +14,19 @@ public class NotificacionController {
     private final ComunicadoService comunicadoService;
     private final MensajeService mensajeService;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public NotificacionController(ComunicadoService comunicadoService, MensajeService mensajeService) {
         this.comunicadoService = comunicadoService;
         this.mensajeService = mensajeService;
     }
 
+    /**
+     * Endpoint GET /api/notificaciones/{usuarioId} — Obtiene los contadores de avisos no leídos (la
+     * campanita). La lógica está en comunicadoService.contarNoLeidos(),
+     * mensajeService.contarNoLeidos().
+     */
     @GetMapping("/{usuarioId}")
     public NotificacionesResponse obtener(@PathVariable Long usuarioId) {
         long comunicados = comunicadoService.contarNoLeidos(usuarioId);

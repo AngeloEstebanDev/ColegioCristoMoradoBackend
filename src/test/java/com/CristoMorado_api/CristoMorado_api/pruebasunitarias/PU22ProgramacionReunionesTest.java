@@ -46,8 +46,14 @@ class PU22ProgramacionReunionesTest {
         mensajeService = mock(MensajeService.class);
         estudianteRepository = mock(EstudianteRepository.class);
         AccesoService acceso = new AccesoService(usuarioRepository, mock(DocenteRepository.class), mock(EstudianteRepository.class),
+                /**
+                 * Crea un objeto simulado (mock) con Mockito para usarlo en la prueba.
+                 */
                 padreRepository, mock(SeccionRepository.class), mock(SeccionCursoRepository.class));
         servicio = new AgendaService(disponibilidadRepository, citaRepository, usuarioRepository, padreRepository,
+                /**
+                 * Crea un objeto simulado (mock) con Mockito para usarlo en la prueba.
+                 */
                 estudianteRepository, mock(PersonalRepository.class), mock(SeccionCursoRepository.class),
                 mock(SeccionRepository.class), acceso, mensajeService);
 
@@ -72,6 +78,9 @@ class PU22ProgramacionReunionesTest {
         when(disponibilidadRepository.findByUsuarioIdAndActivoTrue(ADMIN)).thenReturn(horario);
     }
 
+    /**
+     * Devuelve cita.
+     */
     private Cita cita(Long id, LocalDate fecha, int hora, int minuto, String estado) {
         LocalTime ini = LocalTime.of(hora, minuto);
         return Cita.builder().id(id).responsable(admin).padre(uPadre).fecha(fecha).horaInicio(ini).horaFin(ini.plusMinutes(30))
@@ -79,15 +88,26 @@ class PU22ProgramacionReunionesTest {
                 .reprogramaciones(0).build();
     }
 
+    /**
+     * Indica si tiene lo indicado (devuelve verdadero o falso).
+     */
     private static boolean tiene(List<CitaDto.Horario> libres, LocalDate fecha, String hora) {
         return libres.stream().anyMatch(h -> h.fecha().equals(fecha) && h.horaInicio().equals(hora));
     }
 
+    /**
+     * Devuelve pedido.
+     */
     private static CitaDto.ProgramarRequest pedido(LocalDate fecha, String hora) {
         return new CitaDto.ProgramarRequest(PADRE, 1L, fecha, hora, null, "PRESENCIAL", "Dirección",
                 "Rendimiento en Matemática", 30, null);
     }
 
+    /**
+     * Caso de prueba: PU-22.1 Fecha, hora y responsables válidos: la reunión se programa. Prepara los
+     * datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert). Guarda los
+     * cambios en la base de datos.
+     */
     @Test
     @DisplayName("PU-22.1 Fecha, hora y responsables válidos: la reunión se programa")
     void c1_programacionExitosa() {
@@ -103,6 +123,11 @@ class PU22ProgramacionReunionesTest {
         verify(mensajeService).enviarAviso(any(), eq("Nueva cita"), anyString());
     }
 
+    /**
+     * Caso de prueba: PU-22.2 Fecha u hora inválida (pasada, vacía o mal escrita): se rechaza. Prepara
+     * los datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert). Guarda
+     * los cambios en la base de datos.
+     */
     @Test
     @DisplayName("PU-22.2 Fecha u hora inválida (pasada, vacía o mal escrita): se rechaza")
     void c2_fechaHoraInvalida() {
@@ -115,6 +140,11 @@ class PU22ProgramacionReunionesTest {
         verify(citaRepository, never()).save(any(Cita.class));
     }
 
+    /**
+     * Caso de prueba: PU-22.3 Horario ya ocupado por otra reunión: se rechaza. Prepara los datos
+     * (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert). Guarda los
+     * cambios en la base de datos.
+     */
     @Test
     @DisplayName("PU-22.3 Horario ya ocupado por otra reunión: se rechaza")
     void c3_horarioOcupado() {

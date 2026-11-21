@@ -26,6 +26,10 @@ class PU07CursosSeccionesTest {
     private CursoService cursos;
     private SeccionService secciones;
 
+    /**
+     * Se ejecuta antes de cada prueba: crea los mocks (objetos simulados con Mockito) y los datos de
+     * ejemplo. Guarda los cambios en la base de datos.
+     */
     @BeforeEach
     void setUp() {
         cursoRepository = mock(CursoRepository.class);
@@ -38,6 +42,11 @@ class PU07CursosSeccionesTest {
         when(seccionRepository.save(any(Seccion.class))).thenAnswer(inv -> { Seccion s = inv.getArgument(0); s.setId(20L); return s; });
     }
 
+    /**
+     * Caso de prueba: PU-07.1 Datos obligatorios de un curso (nombre y categoría): validación exitosa.
+     * Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
+     * Guarda los cambios en la base de datos.
+     */
     @Test
     @DisplayName("PU-07.1 Datos obligatorios de un curso (nombre y categoría): validación exitosa")
     void c1_cursoValido() {
@@ -47,6 +56,11 @@ class PU07CursosSeccionesTest {
         verify(cursoRepository, times(1)).save(any(Curso.class));
     }
 
+    /**
+     * Caso de prueba: PU-07.2 Datos obligatorios de una sección (grado, letra y capacidad): validación
+     * exitosa. Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado esperado
+     * (assert). Guarda los cambios en la base de datos.
+     */
     @Test
     @DisplayName("PU-07.2 Datos obligatorios de una sección (grado, letra y capacidad): validación exitosa")
     void c2_seccionValida() {
@@ -57,6 +71,11 @@ class PU07CursosSeccionesTest {
         verify(seccionRepository, times(1)).save(any(Seccion.class));
     }
 
+    /**
+     * Caso de prueba: PU-07.3 Datos incompletos (curso sin nombre o sin categoría, sección sin grado):
+     * se rechazan. Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado
+     * esperado (assert). Guarda los cambios en la base de datos.
+     */
     @Test
     @DisplayName("PU-07.3 Datos incompletos (curso sin nombre o sin categoría, sección sin grado): se rechazan")
     void c3_datosIncompletos() {

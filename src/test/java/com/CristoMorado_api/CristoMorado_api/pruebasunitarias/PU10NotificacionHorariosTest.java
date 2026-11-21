@@ -27,6 +27,10 @@ class PU10NotificacionHorariosTest {
     private MensajeService mensajeService;
     private HorarioService servicio;
 
+    /**
+     * Se ejecuta antes de cada prueba: crea los mocks (objetos simulados con Mockito) y los datos de
+     * ejemplo.
+     */
     @BeforeEach
     void setUp() {
         SeccionRepository seccionRepository = mock(SeccionRepository.class);
@@ -49,6 +53,11 @@ class PU10NotificacionHorariosTest {
                 .thenReturn(List.of(Estudiante.builder().id(1L).nombreCompleto("Juan Pérez García").usuario(cuentaJuan).build()));
     }
 
+    /**
+     * Caso de prueba: PU-10.1 Modificación válida del horario: se genera la notificación «Cambio de
+     * horario» para los alumnos. Prepara los datos (arrange), ejecuta el método (act) y comprueba el
+     * resultado esperado (assert).
+     */
     @Test
     @DisplayName("PU-10.1 Modificación válida del horario: se genera la notificación «Cambio de horario» para los alumnos")
     void c1_generaNotificacion() {
@@ -57,6 +66,11 @@ class PU10NotificacionHorariosTest {
         verify(mensajeService, times(1)).enviarAviso(any(), eq("Cambio de horario"), anyString());
     }
 
+    /**
+     * Caso de prueba: PU-10.2 Datos incompletos de la modificación (sin día): no se genera
+     * notificación. Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado
+     * esperado (assert).
+     */
     @Test
     @DisplayName("PU-10.2 Datos incompletos de la modificación (sin día): no se genera notificación")
     void c2_datosIncompletos() {

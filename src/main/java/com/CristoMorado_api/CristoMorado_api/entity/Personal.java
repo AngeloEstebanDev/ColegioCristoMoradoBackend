@@ -68,7 +68,7 @@ public class Personal {
     @JoinColumn(name = "usuario_id", unique = true)
     private Usuario usuario;
 
-    /** Permisos habilitados por el administrador (ver util.Permiso). */
+    /** Permisos habilitados por el administrador (ver útil.Permiso). */
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "personal_permisos", joinColumns = @JoinColumn(name = "personal_id"))
     @Column(name = "permiso", nullable = false, length = 30)

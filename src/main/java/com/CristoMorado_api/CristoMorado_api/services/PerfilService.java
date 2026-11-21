@@ -20,6 +20,11 @@ import com.CristoMorado_api.CristoMorado_api.util.RolUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Servicio del perfil del usuario (sus datos y su foto). Aquí está la lógica de negocio: valida los
+ * datos, aplica las reglas del colegio y usa los repositorios para leer o guardar en la base de datos.
+ * Los controladores llaman a estos métodos.
+ */
 @Service
 public class PerfilService {
 
@@ -31,6 +36,9 @@ public class PerfilService {
     private final PersonalRepository personalRepository;
     private final PermisoService permisoService;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public PerfilService(UsuarioRepository usuarioRepository, DocenteRepository docenteRepository,
                          EstudianteRepository estudianteRepository, PadreFamiliaRepository padreFamiliaRepository,
                          VerificacionService verificacionService, PersonalRepository personalRepository,
@@ -184,16 +192,25 @@ public class PerfilService {
         return t;
     }
 
+    /**
+     * Convierte un texto vacío en null (para no guardar cadenas vacías).
+     */
     private static String vacioANull(String v) {
         return v == null || v.isEmpty() ? null : v;
     }
 
+    /**
+     * Recorta el perfil del usuario (sus datos y su foto).
+     */
     private static String recortar(String v, int max) {
         return v.length() > max ? v.substring(0, max) : v;
     }
 
     // ---- Gmail ----
 
+    /**
+     * Envía código correo.
+     */
     public CodigoEnviadoResponse enviarCodigoCorreo(Long usuarioId, String correo) {
         return verificacionService.enviarCodigoVinculacion(usuarioId, correo);
     }
@@ -209,10 +226,16 @@ public class PerfilService {
 
     // ---- Contraseña (con código al Gmail) ----
 
+    /**
+     * Envía código contraseña.
+     */
     public CodigoEnviadoResponse enviarCodigoPassword(Long usuarioId) {
         return verificacionService.enviarCodigoCambioPassword(usuarioId);
     }
 
+    /**
+     * Cambia contraseña.
+     */
     public void cambiarPassword(Long usuarioId, CambiarPasswordRequest req) {
         verificacionService.cambiarPassword(usuarioId, req.passwordActual(), req.passwordNueva(), req.codigo());
     }
@@ -227,10 +250,16 @@ public class PerfilService {
                 || r.especialidad() != null || r.tituloProfesional() != null;
     }
 
+    /**
+     * Indica si puede editar (devuelve verdadero o falso).
+     */
     static boolean puedeEditar(Usuario u) {
         return RolUtil.categoria(u.getRol()) != RolUtil.Categoria.ALUMNO;
     }
 
+    /**
+     * Construye respuesta.
+     */
     private PerfilResponse construirRespuesta(Usuario u) {
         Docente docente = docenteRepository.findByUsuarioId(u.getId()).orElse(null);
         Estudiante estudiante = estudianteRepository.findByUsuarioId(u.getId()).orElse(null);
@@ -252,6 +281,9 @@ public class PerfilService {
         );
     }
 
+    /**
+     * Busca usuario. Si no encuentra el registro, responde con error 404.
+     */
     private Usuario buscarUsuario(Long id) {
         return usuarioRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado."));

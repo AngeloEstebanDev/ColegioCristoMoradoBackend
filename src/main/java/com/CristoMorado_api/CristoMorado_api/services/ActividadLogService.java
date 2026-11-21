@@ -118,11 +118,17 @@ public class ActividadLogService {
     private final UsuarioRepository usuarioRepository;
     private final AtomicInteger contador = new AtomicInteger();
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public ActividadLogService(ActividadLogRepository repo, UsuarioRepository usuarioRepository) {
         this.repo = repo;
         this.usuarioRepository = usuarioRepository;
     }
 
+    /**
+     * Devuelve r.
+     */
     private static Regla r(String metodo, String ruta, String modulo, String accion) {
         return new Regla(metodo, Pattern.compile(ruta + "/?"), modulo, accion);
     }
@@ -160,11 +166,17 @@ public class ActividadLogService {
         }
     }
 
+    /**
+     * Devuelve recientes (como lista). Solo lee datos (transacción de solo lectura).
+     */
     @Transactional(readOnly = true)
     public List<ActividadLog> recientes() {
         return repo.findTop20ByOrderByFechaDescIdDesc();
     }
 
+    /**
+     * Recorta el registro de actividad reciente.
+     */
     private static String recortar(String s, int max) {
         if (s == null) return null;
         return s.length() <= max ? s : s.substring(0, max);

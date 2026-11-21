@@ -7,6 +7,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * DTO de salida EstudianteResponse: datos que el backend devuelve al frontend (en JSON) sobre los
+ * estudiantes. Se arma a partir de la entidad para enviar solo lo necesario (por ejemplo, nunca la
+ * contraseña).
+ */
 public record EstudianteResponse(
         Long id,
         String nombreCompleto,
@@ -31,6 +36,9 @@ public record EstudianteResponse(
         Boolean cuentaActiva,
         Boolean correoVerificado
 ) {
+    /**
+     * Convierte la entidad en este DTO, copiando solo los datos que necesita el frontend.
+     */
     public static EstudianteResponse fromEntity(Estudiante e) {
         List<PadreResumen> padres = e.getVinculosFamiliares() == null ? List.of() :
                 e.getVinculosFamiliares().stream()

@@ -21,29 +21,49 @@ public class AgendaController {
 
     private final AgendaService agendaService;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public AgendaController(AgendaService agendaService) {
         this.agendaService = agendaService;
     }
 
     // ---------------- Disponibilidad ----------------
 
+    /**
+     * Endpoint GET /api/agenda/disponibilidad — Devuelve disponibilidad (como lista). La lógica está
+     * en agendaService.misDisponibilidades().
+     */
     @GetMapping("/disponibilidad")
     public List<CitaDto.Disponibilidad> disponibilidad(@RequestHeader(value = USUARIO, required = false) Long usuarioId) {
         return agendaService.misDisponibilidades(usuarioId);
     }
 
+    /**
+     * Endpoint POST /api/agenda/disponibilidad — Crea disponibilidad. La lógica está en
+     * agendaService.crearDisponibilidad().
+     */
     @PostMapping("/disponibilidad")
     public CitaDto.Disponibilidad crearDisponibilidad(@RequestBody CitaDto.DisponibilidadRequest req,
                                                       @RequestHeader(value = USUARIO, required = false) Long usuarioId) {
         return agendaService.crearDisponibilidad(usuarioId, req);
     }
 
+    /**
+     * Endpoint PUT /api/agenda/disponibilidad/{id} — Actualiza disponibilidad. La lógica está en
+     * agendaService.actualizarDisponibilidad().
+     */
     @PutMapping("/disponibilidad/{id}")
     public CitaDto.Disponibilidad actualizarDisponibilidad(@PathVariable Long id, @RequestBody CitaDto.DisponibilidadRequest req,
                                                            @RequestHeader(value = USUARIO, required = false) Long usuarioId) {
         return agendaService.actualizarDisponibilidad(usuarioId, id, req);
     }
 
+    /**
+     * Endpoint PATCH /api/agenda/disponibilidad/{id}/estado — Devuelve estado disponibilidad. La
+     * lógica está en agendaService.cambiarEstadoDisponibilidad(). Si los datos no son válidos,
+     * responde con error 400 y un mensaje claro para el usuario.
+     */
     @PatchMapping("/disponibilidad/{id}/estado")
     public CitaDto.Disponibilidad estadoDisponibilidad(@PathVariable Long id, @RequestBody EstadoRequest req,
                                                        @RequestHeader(value = USUARIO, required = false) Long usuarioId) {
@@ -51,6 +71,10 @@ public class AgendaController {
         return agendaService.cambiarEstadoDisponibilidad(usuarioId, id, req.estado());
     }
 
+    /**
+     * Endpoint DELETE /api/agenda/disponibilidad/{id} — Elimina disponibilidad. La lógica está en
+     * agendaService.eliminarDisponibilidad(). Si todo sale bien responde 204 (sin contenido).
+     */
     @DeleteMapping("/disponibilidad/{id}")
     public ResponseEntity<Void> eliminarDisponibilidad(@PathVariable Long id,
                                                        @RequestHeader(value = USUARIO, required = false) Long usuarioId) {
@@ -60,17 +84,29 @@ public class AgendaController {
 
     // ---------------- Padre: solicitar ----------------
 
+    /**
+     * Endpoint GET /api/agenda/responsables — Devuelve responsables (como lista). La lógica está en
+     * agendaService.responsables().
+     */
     @GetMapping("/responsables")
     public List<CitaDto.Responsable> responsables(@RequestHeader(value = USUARIO, required = false) Long usuarioId) {
         return agendaService.responsables(usuarioId);
     }
 
+    /**
+     * Endpoint GET /api/agenda/responsables/{responsableId}/horarios — Devuelve horarios (como lista).
+     * La lógica está en agendaService.horariosLibres().
+     */
     @GetMapping("/responsables/{responsableId}/horarios")
     public List<CitaDto.Horario> horarios(@PathVariable Long responsableId,
                                           @RequestHeader(value = USUARIO, required = false) Long usuarioId) {
         return agendaService.horariosLibres(usuarioId, responsableId);
     }
 
+    /**
+     * Endpoint POST /api/agenda/citas/solicitar — Solicita la agenda: disponibilidad de atención y
+     * citas con los padres. La lógica está en agendaService.solicitar().
+     */
     @PostMapping("/citas/solicitar")
     public CitaDto.Cita solicitar(@RequestBody CitaDto.SolicitarRequest req,
                                   @RequestHeader(value = USUARIO, required = false) Long usuarioId) {
@@ -79,11 +115,19 @@ public class AgendaController {
 
     // ---------------- Responsable: programar ----------------
 
+    /**
+     * Endpoint GET /api/agenda/padres — Devuelve padres (como lista). La lógica está en
+     * agendaService.padresParaProgramar().
+     */
     @GetMapping("/padres")
     public List<CitaDto.PadreContacto> padres(@RequestHeader(value = USUARIO, required = false) Long usuarioId) {
         return agendaService.padresParaProgramar(usuarioId);
     }
 
+    /**
+     * Endpoint POST /api/agenda/citas — Programa la agenda: disponibilidad de atención y citas con los
+     * padres. La lógica está en agendaService.programar().
+     */
     @PostMapping("/citas")
     public CitaDto.Cita programar(@RequestBody CitaDto.ProgramarRequest req,
                                   @RequestHeader(value = USUARIO, required = false) Long usuarioId) {
@@ -104,12 +148,21 @@ public class AgendaController {
         return agendaService.misHorasLibres(usuarioId, fecha, duracion);
     }
 
+    /**
+     * Endpoint PUT /api/agenda/disponibilidad/semana — Guarda semana. La lógica está en
+     * agendaService.guardarSemana().
+     */
     @PutMapping("/disponibilidad/semana")
     public List<CitaDto.Disponibilidad> guardarSemana(@RequestBody CitaDto.DisponibilidadSemanaRequest req,
                                                       @RequestHeader(value = USUARIO, required = false) Long usuarioId) {
         return agendaService.guardarSemana(usuarioId, req);
     }
 
+    /**
+     * Endpoint DELETE /api/agenda/citas/{id} — Elimina la agenda: disponibilidad de atención y citas
+     * con los padres. La lógica está en agendaService.eliminar(). Si todo sale bien responde 204 (sin
+     * contenido).
+     */
     @DeleteMapping("/citas/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id,
                                          @RequestHeader(value = USUARIO, required = false) Long usuarioId) {
@@ -119,40 +172,67 @@ public class AgendaController {
 
     // ---------------- Mis citas ----------------
 
+    /**
+     * Endpoint GET /api/agenda/citas — Devuelve mis citas del usuario que inició sesión. La lógica
+     * está en agendaService.misCitas().
+     */
     @GetMapping("/citas")
     public List<CitaDto.Cita> misCitas(@RequestHeader(value = USUARIO, required = false) Long usuarioId) {
         return agendaService.misCitas(usuarioId);
     }
 
+    /**
+     * Endpoint GET /api/agenda/resumen — Devuelve resumen. La lógica está en agendaService.resumen().
+     */
     @GetMapping("/resumen")
     public CitaDto.Resumen resumen(@RequestHeader(value = USUARIO, required = false) Long usuarioId) {
         return agendaService.resumen(usuarioId);
     }
 
+    /**
+     * Endpoint PATCH /api/agenda/citas/{id}/confirmar — Confirma la agenda: disponibilidad de atención
+     * y citas con los padres. La lógica está en agendaService.confirmar().
+     */
     @PatchMapping("/citas/{id}/confirmar")
     public CitaDto.Cita confirmar(@PathVariable Long id, @RequestBody(required = false) CitaDto.AccionRequest req,
                                   @RequestHeader(value = USUARIO, required = false) Long usuarioId) {
         return agendaService.confirmar(usuarioId, id, req == null ? null : req.motivo());
     }
 
+    /**
+     * Endpoint PATCH /api/agenda/citas/{id}/rechazar — Rechaza la agenda: disponibilidad de atención y
+     * citas con los padres. La lógica está en agendaService.rechazar().
+     */
     @PatchMapping("/citas/{id}/rechazar")
     public CitaDto.Cita rechazar(@PathVariable Long id, @RequestBody(required = false) CitaDto.AccionRequest req,
                                  @RequestHeader(value = USUARIO, required = false) Long usuarioId) {
         return agendaService.rechazar(usuarioId, id, req == null ? null : req.motivo());
     }
 
+    /**
+     * Endpoint PATCH /api/agenda/citas/{id}/cancelar — Cancela la agenda: disponibilidad de atención y
+     * citas con los padres. La lógica está en agendaService.cancelar().
+     */
     @PatchMapping("/citas/{id}/cancelar")
     public CitaDto.Cita cancelar(@PathVariable Long id, @RequestBody(required = false) CitaDto.AccionRequest req,
                                  @RequestHeader(value = USUARIO, required = false) Long usuarioId) {
         return agendaService.cancelar(usuarioId, id, req == null ? null : req.motivo());
     }
 
+    /**
+     * Endpoint PATCH /api/agenda/citas/{id}/reprogramar — Reprograma la agenda: disponibilidad de
+     * atención y citas con los padres. La lógica está en agendaService.reprogramar().
+     */
     @PatchMapping("/citas/{id}/reprogramar")
     public CitaDto.Cita reprogramar(@PathVariable Long id, @RequestBody CitaDto.ReprogramarRequest req,
                                     @RequestHeader(value = USUARIO, required = false) Long usuarioId) {
         return agendaService.reprogramar(usuarioId, id, req);
     }
 
+    /**
+     * Endpoint PATCH /api/agenda/citas/{id}/realizada — Devuelve realizada. La lógica está en
+     * agendaService.marcarRealizada().
+     */
     @PatchMapping("/citas/{id}/realizada")
     public CitaDto.Cita realizada(@PathVariable Long id, @RequestBody(required = false) CitaDto.AccionRequest req,
                                   @RequestHeader(value = USUARIO, required = false) Long usuarioId) {

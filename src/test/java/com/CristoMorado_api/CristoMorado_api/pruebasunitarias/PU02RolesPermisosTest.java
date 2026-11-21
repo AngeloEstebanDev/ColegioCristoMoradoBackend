@@ -26,6 +26,10 @@ class PU02RolesPermisosTest {
     private UsuarioRepository usuarioRepository;
     private PermisoService servicio;
 
+    /**
+     * Se ejecuta antes de cada prueba: crea los mocks (objetos simulados con Mockito) y los datos de
+     * ejemplo.
+     */
     @BeforeEach
     void setUp() {
         usuarioRepository = mock(UsuarioRepository.class);
@@ -36,6 +40,10 @@ class PU02RolesPermisosTest {
                 Usuario.builder().id(32L).usuario("ALU87654321").rol("ALUMNO").estado(true).build()));
     }
 
+    /**
+     * Caso de prueba: PU-02.1 Rol Administrador con permiso autorizado (USUARIOS): acceso permitido.
+     * Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
+     */
     @Test
     @DisplayName("PU-02.1 Rol Administrador con permiso autorizado (USUARIOS): acceso permitido")
     void c1_administradorPermitido() {
@@ -45,6 +53,11 @@ class PU02RolesPermisosTest {
         assertTrue(servicio.permisosDe(u).contains("USUARIOS"));
     }
 
+    /**
+     * Caso de prueba: PU-02.2 Rol Estudiante intenta una acción exclusiva del administrador: acceso
+     * denegado. Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado esperado
+     * (assert).
+     */
     @Test
     @DisplayName("PU-02.2 Rol Estudiante intenta una acción exclusiva del administrador: acceso denegado")
     void c2_estudianteDenegado() {
@@ -55,6 +68,10 @@ class PU02RolesPermisosTest {
         assertThrows(AccesoDenegadoException.class, () -> servicio.exigirAdministrador(32L));
     }
 
+    /**
+     * Caso de prueba: PU-02.3 Permiso inexistente: no se autoriza la acción. Prepara los datos
+     * (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
+     */
     @Test
     @DisplayName("PU-02.3 Permiso inexistente: no se autoriza la acción")
     void c3_permisoInexistente() {

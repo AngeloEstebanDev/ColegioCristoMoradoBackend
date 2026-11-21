@@ -44,6 +44,9 @@ public class ArchivoService {
     private final EntregaEnvioRepository envioRepository;
     private final AccesoService accesoService;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public ArchivoService(ArchivoAdjuntoRepository archivoRepository, MaterialRepository materialRepository,
                           ActividadRepository actividadRepository, EntregaRepository entregaRepository,
                           EntregaEnvioRepository envioRepository, AccesoService accesoService) {
@@ -102,6 +105,10 @@ public class ArchivoService {
                 .build());
     }
 
+    /**
+     * Elimina el archivo. Se ejecuta en una transacción: si algo falla, no se guarda nada a medias.
+     * Borra registros de la base de datos.
+     */
     @Transactional
     public void eliminar(Long archivoId) {
         if (archivoId != null && archivoRepository.existsById(archivoId)) archivoRepository.deleteById(archivoId);
@@ -133,6 +140,9 @@ public class ArchivoService {
                 if (!AccesoService.esDocente(u)) return a;
             } catch (AccesoDenegadoException ignorado) { /* sigue */ }
         }
+        /**
+         * Devuelve acceso denegado exception.
+         */
         throw new AccesoDenegadoException("No tienes acceso a este archivo.");
     }
 
@@ -149,12 +159,18 @@ public class ArchivoService {
         return res.isEmpty() ? List.copyOf(FORMATOS.keySet()) : res;
     }
 
+    /**
+     * Devuelve extensiones.
+     */
     private static Set<String> extensiones(Collection<String> formatos) {
         Set<String> ext = new HashSet<>();
         normalizarFormatos(formatos).forEach(f -> ext.addAll(FORMATOS.get(f)));
         return ext;
     }
 
+    /**
+     * Devuelve nombres formatos (como lista).
+     */
     private static List<String> nombresFormatos(Collection<String> formatos) {
         return normalizarFormatos(formatos).stream().map(f -> switch (f) {
             case "WORD" -> "Word (.doc, .docx)";
@@ -179,16 +195,25 @@ public class ArchivoService {
         };
     }
 
+    /**
+     * Devuelve empieza (verdadero o falso).
+     */
     private static boolean empieza(byte[] d, int... firma) {
         if (d.length < firma.length) return false;
         for (int i = 0; i < firma.length; i++) if ((d[i] & 0xFF) != firma[i]) return false;
         return true;
     }
 
+    /**
+     * Devuelve info.
+     */
     public static ArchivoDto.Info info(ArchivoAdjunto a) {
         return a == null ? null : new ArchivoDto.Info(a.getId(), a.getNombre(), a.getTipoMime(), a.getTamanio());
     }
 
+    /**
+     * Limpia nombre.
+     */
     private static String limpiarNombre(String nombre) {
         String n = nombre == null ? "" : nombre.trim();
         n = n.replace("\\", "/");

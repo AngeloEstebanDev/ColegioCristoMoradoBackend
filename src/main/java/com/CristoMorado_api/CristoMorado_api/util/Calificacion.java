@@ -26,8 +26,15 @@ public final class Calificacion {
     public static final Set<String> TIPOS = Set.of(
             "EXAMEN", "PRACTICA", "TAREA", "CUESTIONARIO", "ACTIVIDAD", "PARTICIPACION", "PROYECTO", "OTRO");
 
+    /**
+     * Constructor de Calificacion.
+     */
     private Calificacion() {}
 
+    /**
+     * Estructura de datos Ponderada (record): agrupa ponderada en un solo objeto inmutable que viaja
+     * como JSON.
+     */
     public record Ponderada(double valor, int peso) {}
 
     /** Promedio ponderado; null si no hay notas. */
@@ -52,14 +59,23 @@ public final class Calificacion {
         return n == 0 ? null : dosDecimales(suma / n);
     }
 
+    /**
+     * Devuelve dos decimales.
+     */
     public static Double dosDecimales(double v) {
         return BigDecimal.valueOf(v).setScale(2, RoundingMode.HALF_UP).doubleValue();
     }
 
+    /**
+     * Redondea.
+     */
     public static Integer redondear(Double v) {
         return v == null ? null : BigDecimal.valueOf(v).setScale(0, RoundingMode.HALF_UP).intValue();
     }
 
+    /**
+     * Devuelve literal (como texto).
+     */
     public static String literal(Double v) {
         Integer r = redondear(v);
         if (r == null) return null;
@@ -69,11 +85,17 @@ public final class Calificacion {
         return "C";
     }
 
+    /**
+     * Devuelve aprobado (verdadero o falso).
+     */
     public static boolean aprobado(Double v) {
         Integer r = redondear(v);
         return r != null && r >= APROBATORIA;
     }
 
+    /**
+     * Devuelve promedio.
+     */
     public static NotaDto.Promedio promedio(Double v) {
         return new NotaDto.Promedio(v, redondear(v), literal(v));
     }

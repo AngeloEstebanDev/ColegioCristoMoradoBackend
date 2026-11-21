@@ -4,6 +4,11 @@ import com.CristoMorado_api.CristoMorado_api.entity.Estudiante;
 import com.CristoMorado_api.CristoMorado_api.entity.EstudianteFamiliar;
 import com.CristoMorado_api.CristoMorado_api.entity.PadreFamilia;
 
+/**
+ * DTO de salida VinculoResponse: datos que el backend devuelve al frontend (en JSON) sobre los
+ * vínculos entre padres e hijos. Se arma a partir de la entidad para enviar solo lo necesario (por
+ * ejemplo, nunca la contraseña).
+ */
 public record VinculoResponse(
         Long id,
         String parentesco,
@@ -26,6 +31,9 @@ public record VinculoResponse(
         Long padreUsuarioId,
         Long estudianteUsuarioId
 ) {
+    /**
+     * Convierte la entidad en este DTO, copiando solo los datos que necesita el frontend.
+     */
     public static VinculoResponse fromEntity(EstudianteFamiliar v) {
         PadreFamilia p = v.getPadreFamilia();
         Estudiante e = v.getEstudiante();

@@ -71,10 +71,16 @@ public class ReparacionEsquema implements ApplicationRunner {
 
     private final JdbcTemplate jdbc;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public ReparacionEsquema(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 
+    /**
+     * Se ejecuta al arrancar el backend:.
+     */
     @Override
     public void run(ApplicationArguments args) {
         for (String sql : SENTENCIAS) {
@@ -105,6 +111,9 @@ public class ReparacionEsquema implements ApplicationRunner {
         }
     }
 
+    /**
+     * Devuelve sql ajuste horarios (como texto).
+     */
     static String sqlAjusteHorarios() {
         StringBuilder antiguas = new StringBuilder(), caso = new StringBuilder();
         for (String[] h : HORAS) {

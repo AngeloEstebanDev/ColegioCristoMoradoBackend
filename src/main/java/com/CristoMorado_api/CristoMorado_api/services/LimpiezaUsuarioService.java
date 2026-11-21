@@ -32,6 +32,9 @@ public class LimpiezaUsuarioService {
     private final EntregaRepository entregaRepository;
     private final ArchivoAdjuntoRepository archivoRepository;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public LimpiezaUsuarioService(ComunicadoRepository comunicadoRepository,
                                   ComunicadoLecturaRepository lecturaRepository,
                                   MensajeRepository mensajeRepository,
@@ -58,6 +61,9 @@ public class LimpiezaUsuarioService {
         this.archivoRepository = archivoRepository;
     }
 
+    /**
+     * Libera referencias. Se ejecuta en una transacción: si algo falla, no se guarda nada a medias.
+     */
     @Transactional
     public void liberarReferencias(Long usuarioId) {
         comunicadoRepository.desvincularAutor(usuarioId);       // el comunicado se conserva

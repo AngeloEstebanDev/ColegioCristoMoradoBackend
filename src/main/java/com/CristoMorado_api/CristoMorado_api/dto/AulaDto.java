@@ -7,6 +7,9 @@ import java.util.List;
 /** Aula virtual: cursos del docente, materiales (HU-13), actividades (HU-14) y entregas (HU-15). */
 public final class AulaDto {
 
+    /**
+     * Constructor de AulaDto.
+     */
     private AulaDto() {}
 
     /** Curso (asignación sección-curso) visto desde el docente, alumno o padre. */
@@ -25,6 +28,10 @@ public final class AulaDto {
     public record MaterialRequest(String titulo, String descripcion, String enlace,
                                   ArchivoDto.Request archivo, Boolean quitarArchivo, String tipo, Long carpetaId) {}
 
+    /**
+     * Estructura de datos MaterialResponse (record): agrupa material response en un solo objeto
+     * inmutable que viaja como JSON.
+     */
     public record MaterialResponse(Long id, Long seccionCursoId, String curso, String color, String titulo,
                                    String descripcion, String enlace, ArchivoDto.Info archivo, String autor,
                                    LocalDateTime fechaPublicacion, LocalDateTime fechaActualizacion,
@@ -32,6 +39,10 @@ public final class AulaDto {
 
     // ---------------- Carpetas ----------------
 
+    /**
+     * Estructura de datos CarpetaRequest (record): agrupa carpeta request en un solo objeto inmutable
+     * que viaja como JSON.
+     */
     public record CarpetaRequest(String nombre) {}
 
     /** Carpeta del contenido, dentro de un bimestre. */
@@ -39,8 +50,16 @@ public final class AulaDto {
                           LocalDate periodoInicio, LocalDate periodoFin, String nombre, Boolean visible,
                           LocalDateTime fechaCreacion) {}
 
+    /**
+     * Estructura de datos VisibleRequest (record): agrupa visible request en un solo objeto inmutable
+     * que viaja como JSON.
+     */
     public record VisibleRequest(Boolean visible) {}
 
+    /**
+     * Estructura de datos TardiaRequest (record): agrupa tardía request en un solo objeto inmutable
+     * que viaja como JSON.
+     */
     public record TardiaRequest(Boolean permiteTardia) {}
 
     // ---------------- Actividades ----------------
@@ -49,6 +68,10 @@ public final class AulaDto {
     public record PreguntaRequest(String enunciado, List<String> opciones, Integer respuestaCorrecta, Double puntos,
                                   String tipo, List<Integer> respuestasCorrectas) {}
 
+    /**
+     * Estructura de datos ActividadRequest (record): agrupa actividad request en un solo objeto
+     * inmutable que viaja como JSON.
+     */
     public record ActividadRequest(String tipo, String titulo, String instrucciones, LocalDateTime fechaLimite,
                                    Double puntajeMaximo, Boolean permiteTardia, String enlace,
                                    ArchivoDto.Request archivo, Boolean quitarArchivo,
@@ -79,6 +102,10 @@ public final class AulaDto {
     public record EntregaRequest(String texto, String enlace, ArchivoDto.Request archivo, List<Integer> respuestas,
                                  List<List<Integer>> selecciones) {}
 
+    /**
+     * Estructura de datos CalificarRequest (record): agrupa calificar request en un solo objeto
+     * inmutable que viaja como JSON.
+     */
     public record CalificarRequest(Double puntaje, String comentario) {}
 
     /** nota20 = puntaje llevado a la escala 0-20 (la que va al registro de notas). */
@@ -96,10 +123,18 @@ public final class AulaDto {
     /** Fila de la lista de entregas del docente: todos los alumnos, hayan entregado o no. */
     public record FilaEntrega(Long estudianteId, String estudianteNombre, EntregaResponse entrega, String foto) {}
 
+    /**
+     * Estructura de datos Entregas (record): agrupa entregas en un solo objeto inmutable que viaja
+     * como JSON.
+     */
     public record Entregas(ActividadResponse actividad, List<FilaEntrega> alumnos) {}
 
     /** Persona del curso (para "Profesor del curso" y "Participantes"). foto: ruta de avatar o data URL. */
     public record Participante(Long usuarioId, String nombre, String detalle, String foto) {}
 
+    /**
+     * Estructura de datos Participantes (record): agrupa participantes en un solo objeto inmutable que
+     * viaja como JSON.
+     */
     public record Participantes(Participante docente, List<Participante> alumnos) {}
 }

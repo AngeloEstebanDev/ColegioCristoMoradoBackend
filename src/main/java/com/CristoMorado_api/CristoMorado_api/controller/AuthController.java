@@ -18,6 +18,11 @@ import com.CristoMorado_api.CristoMorado_api.config.ActividadInterceptor;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Controlador REST del inicio de sesión y la recuperación de contraseña. Recibe las peticiones HTTP
+ * del frontend en las rutas que empiezan con /api/auth, revisa los datos básicos y llama al servicio
+ * que tiene la lógica. Lo que devuelve cada método se convierte automáticamente a JSON.
+ */
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "${app.cors.origenes}")
@@ -27,6 +32,9 @@ public class AuthController {
     private final VerificacionService verificacionService;
     private final PermisoService permisoService;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public AuthController(UsuarioRepository usuarioRepository, VerificacionService verificacionService,
                           PermisoService permisoService) {
         this.usuarioRepository = usuarioRepository;
@@ -89,11 +97,18 @@ public class AuthController {
         attrs.setAttribute(ActividadInterceptor.ATR_ESTADO, estado, RequestAttributes.SCOPE_REQUEST);
     }
 
+    /**
+     * Devuelve error como respuesta HTTP.
+     */
     private static ResponseEntity<Map<String, String>> error(int status, String mensaje, String campo) {
         return ResponseEntity.status(status).body(campo == null
                 ? Map.of("mensaje", mensaje)
                 : Map.of("mensaje", mensaje, "campo", campo));
     }
 
+    /**
+     * Estructura de datos LoginRequest (record): agrupa login request en un solo objeto inmutable que
+     * viaja como JSON.
+     */
     public record LoginRequest(String usuario, String password) {}
 }

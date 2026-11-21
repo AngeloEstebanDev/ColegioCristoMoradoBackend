@@ -31,6 +31,9 @@ public class VinculoService {
     private final EstudianteRepository estudianteRepository;
     private final PadreFamiliaRepository padreRepository;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public VinculoService(EstudianteFamiliarRepository vinculoRepository,
                           EstudianteRepository estudianteRepository,
                           PadreFamiliaRepository padreRepository) {
@@ -39,6 +42,10 @@ public class VinculoService {
         this.padreRepository = padreRepository;
     }
 
+    /**
+     * Devuelve la lista de los vínculos entre padres e hijos. Solo lee datos (transacción de solo
+     * lectura).
+     */
     @Transactional(readOnly = true)
     public List<VinculoResponse> listar() {
         return vinculoRepository.findAll().stream()
@@ -48,6 +55,13 @@ public class VinculoService {
                 .toList();
     }
 
+    /**
+     * Crea un nuevo registro (el vínculo padre-hijo) con los datos recibidos. Se ejecuta en una
+     * transacción: si algo falla, no se guarda nada a medias. Si no encuentra el registro, responde
+     * con error 404. Si los datos no son válidos, responde con error 400 y un mensaje claro para el
+     * usuario. Si el dato ya existe (por ejemplo, un DNI o usuario repetido), responde con error 409.
+     * Guarda los cambios en la base de datos.
+     */
     @Transactional
     public VinculoResponse crear(VinculoRequest req) {
         if (req == null || req.padreId() == null) throw new DatosInvalidosException("Selecciona al padre o apoderado.");
@@ -76,6 +90,10 @@ public class VinculoService {
         return VinculoResponse.fromEntity(vinculoRepository.save(v));
     }
 
+    /**
+     * Elimina el vínculo padre-hijo indicado por su id. Se ejecuta en una transacción: si algo falla,
+     * no se guarda nada a medias. Borra registros de la base de datos.
+     */
     @Transactional
     public void eliminar(Long id) {
         vinculoRepository.delete(buscarOFallar(id));
@@ -92,12 +110,20 @@ public class VinculoService {
         }
     }
 
+    /**
+     * Devuelve parentesco (como texto). Si los datos no son válidos, responde con error 400 y un
+     * mensaje claro para el usuario.
+     */
     private static String parentesco(String valor) {
         if (valor == null || valor.isBlank()) throw new DatosInvalidosException("Selecciona el parentesco.");
         return PARENTESCOS.stream().filter(p -> p.equalsIgnoreCase(valor.trim())).findFirst()
                 .orElseThrow(() -> new DatosInvalidosException("Parentesco no válido. Usa: " + String.join(", ", PARENTESCOS) + "."));
     }
 
+    /**
+     * Busca el registro por su id; si no existe, lanza RecursoNoEncontradoException (error 404). Si no
+     * encuentra el registro, responde con error 404.
+     */
     private EstudianteFamiliar buscarOFallar(Long id) {
         return vinculoRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Vínculo no encontrado."));

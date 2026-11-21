@@ -46,6 +46,9 @@ public class ReporteService {
     private final AccesoService accesoService;
     private final NotaService notaService;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public ReporteService(SeccionRepository seccionRepository, SeccionCursoRepository seccionCursoRepository,
                           EvaluacionRepository evaluacionRepository, AsistenciaRepository asistenciaRepository,
                           ActividadRepository actividadRepository, EntregaRepository entregaRepository,
@@ -60,6 +63,9 @@ public class ReporteService {
         this.notaService = notaService;
     }
 
+    /**
+     * Devuelve filtros. Solo lee datos (transacción de solo lectura).
+     */
     @Transactional(readOnly = true)
     public ReporteDto.Filtros filtros() {
         List<ReporteDto.Opcion> periodos = notaService.periodosOrdenados().stream()
@@ -94,11 +100,20 @@ public class ReporteService {
                 listaCursos, alumnos);
     }
 
+    /**
+     * Genera los reportes académicos y la exportación a Excel. Solo lee datos (transacción de solo
+     * lectura).
+     */
     @Transactional(readOnly = true)
     public ReporteDto.Tabla generar(String tipo, Long periodoId, Long seccionId, LocalDate desde, LocalDate hasta) {
         return generar(tipo, periodoId, seccionId, desde, hasta, null, null, null);
     }
 
+    /**
+     * Genera los reportes académicos y la exportación a Excel. Solo lee datos (transacción de solo
+     * lectura). Si los datos no son válidos, responde con error 400 y un mensaje claro para el
+     * usuario.
+     */
     @Transactional(readOnly = true)
     public ReporteDto.Tabla generar(String tipo, Long periodoId, Long seccionId, LocalDate desde, LocalDate hasta,
                                     String grado, Long estudianteId, Long cursoId) {
@@ -341,6 +356,9 @@ public class ReporteService {
         return todos.stream().filter(p -> p.getAnio() == anio).sorted(Comparator.comparing(Periodo::getBimestre)).toList();
     }
 
+    /**
+     * Devuelve periodo de.
+     */
     private static Periodo periodoDe(List<Periodo> periodos, LocalDate fecha) {
         for (Periodo p : periodos) {
             if (!fecha.isBefore(p.getFechaInicio()) && !fecha.isAfter(p.getFechaFin())) return p;
@@ -355,6 +373,9 @@ public class ReporteService {
         return n.replaceAll("\\s+\\d{4}$", "");
     }
 
+    /**
+     * Devuelve descripción (como texto).
+     */
     private String descripcion(ReporteDto.Filtro f, List<Seccion> secciones, List<Periodo> periodos) {
         String salon = f.seccionId() != null && !secciones.isEmpty() ? AccesoService.salon(secciones.get(0))
                 : f.grado() != null ? f.grado() + " (todas las secciones)" : "Todos los grados";
@@ -363,6 +384,9 @@ public class ReporteService {
         return salon + " · " + per + " · Generado el " + hoy();
     }
 
+    /**
+     * Devuelve limite.
+     */
     private static ReporteDto.Indicador limite(int total) {
         return new ReporteDto.Indicador("Filas mostradas", LIMITE_FILAS + " de " + total,
                 "Hay más registros: usa los filtros para acotar el reporte.");
@@ -372,6 +396,9 @@ public class ReporteService {
     // Rendimiento
     // ------------------------------------------------------------------
 
+    /**
+     * Devuelve rendimiento sección.
+     */
     private ReporteDto.Tabla rendimientoSeccion(Periodo p, Seccion s) {
         List<SeccionCurso> cursos = cursosActivos(s);
         List<Estudiante> alumnos = accesoService.alumnosDe(s);
@@ -423,6 +450,9 @@ public class ReporteService {
                         new ReporteDto.Indicador("Con cursos desaprobados", String.valueOf(conDesaprobados), null)));
     }
 
+    /**
+     * Devuelve rendimiento general.
+     */
     private ReporteDto.Tabla rendimientoGeneral(Periodo p) {
         List<String> columnas = List.of("Grado", "Sección", "Turno", "Tutor", "Alumnos", "Cursos", "Promedio",
                 "Literal", "Aprobados", "Con desaprobados", "Sin notas", "% Aprobación");
@@ -464,6 +494,9 @@ public class ReporteService {
     // Cursos
     // ------------------------------------------------------------------
 
+    /**
+     * Devuelve cursos.
+     */
     private ReporteDto.Tabla cursos(Periodo p) {
         List<String> columnas = List.of("Grado", "Sección", "Curso", "Docente", "Evaluaciones", "Alumnos con nota",
                 "Promedio", "Literal", "Aprobados", "Desaprobados", "% Aprobación");
@@ -495,6 +528,10 @@ public class ReporteService {
     // Asistencia
     // ------------------------------------------------------------------
 
+    /**
+     * Devuelve asistencia. Si los datos no son válidos, responde con error 400 y un mensaje claro para
+     * el usuario.
+     */
     private ReporteDto.Tabla asistencia(Long periodoId, Long seccionId, LocalDate desde, LocalDate hasta) {
         LocalDate d = desde, h = hasta;
         if (d == null || h == null) {
@@ -561,6 +598,9 @@ public class ReporteService {
     // Alumnos en riesgo
     // ------------------------------------------------------------------
 
+    /**
+     * Devuelve riesgo.
+     */
     private ReporteDto.Tabla riesgo(Periodo p) {
         LocalDate hasta = p.getFechaFin().isAfter(LocalDate.now()) ? LocalDate.now() : p.getFechaFin();
         List<List<Object>> filas = new ArrayList<>();
@@ -613,6 +653,9 @@ public class ReporteService {
     // Cumplimiento de entregas
     // ------------------------------------------------------------------
 
+    /**
+     * Devuelve entregas.
+     */
     private ReporteDto.Tabla entregas(Periodo p) {
         LocalDateTime ini = p.getFechaInicio().atStartOfDay(), fin = p.getFechaFin().plusDays(1).atStartOfDay();
         List<List<Object>> filas = new ArrayList<>();
@@ -649,16 +692,26 @@ public class ReporteService {
 
     // ------------------------------------------------------------------
 
+    /**
+     * Devuelve periodo. Si los datos no son válidos, responde con error 400 y un mensaje claro para el
+     * usuario.
+     */
     private Periodo periodo(Long periodoId) {
         Periodo p = notaService.elegirPeriodo(periodoId);
         if (p == null) throw new DatosInvalidosException("Aún no hay periodos registrados. Créalos en Académico > Periodos.");
         return p;
     }
 
+    /**
+     * Devuelve sección. Si no encuentra el registro, responde con error 404.
+     */
     private Seccion seccion(Long id) {
         return seccionRepository.findById(id).orElseThrow(() -> new RecursoNoEncontradoException("Sección no encontrada."));
     }
 
+    /**
+     * Devuelve secciones activas (como lista).
+     */
     private List<Seccion> seccionesActivas() {
         return seccionRepository.findAll().stream()
                 .filter(s -> "Activa".equals(s.getEstado()))
@@ -666,6 +719,9 @@ public class ReporteService {
                 .toList();
     }
 
+    /**
+     * Devuelve cursos activos (como lista).
+     */
     private List<SeccionCurso> cursosActivos(Seccion s) {
         return seccionCursoRepository.findBySeccionId(s.getId()).stream()
                 .filter(sc -> "Activo".equals(sc.getEstado()))
@@ -688,6 +744,9 @@ public class ReporteService {
         return res;
     }
 
+    /**
+     * Devuelve porcentaje.
+     */
     private static Double porcentaje(long parte, long total) {
         return total == 0 ? null : Calificacion.dosDecimales(parte * 100.0 / total);
     }
@@ -697,14 +756,23 @@ public class ReporteService {
         return v == null ? "" : v;
     }
 
+    /**
+     * Devuelve el texto de los reportes académicos y la exportación a Excel.
+     */
     private static String texto(Double v) {
         return v == null ? "—" : String.format(Locale.US, "%.2f", v);
     }
 
+    /**
+     * Devuelve el texto de pct.
+     */
     private static String textoPct(Double v) {
         return v == null ? "—" : String.format(Locale.US, "%.1f %%", v);
     }
 
+    /**
+     * Devuelve hoy (como texto).
+     */
     private static String hoy() {
         return LocalDate.now().format(DMY);
     }

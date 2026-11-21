@@ -7,29 +7,53 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.Map;
 
+/**
+ * Excepción GlobalExceptionHandler: se lanza cuando ocurre este tipo de error. GlobalExceptionHandler
+ * la atrapa y responde al frontend con el código HTTP y el mensaje adecuados.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    /**
+     * Atrapa los errores de tipo indicado y responde al frontend con un JSON de error (handle
+     * duplicado).
+     */
     @ExceptionHandler(RecursoDuplicadoException.class)
     public ResponseEntity<Map<String, String>> handleDuplicado(RecursoDuplicadoException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("mensaje", ex.getMessage()));
     }
 
+    /**
+     * Atrapa los errores de tipo indicado y responde al frontend con un JSON de error (handle no
+     * encontrado).
+     */
     @ExceptionHandler(RecursoNoEncontradoException.class)
     public ResponseEntity<Map<String, String>> handleNoEncontrado(RecursoNoEncontradoException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("mensaje", ex.getMessage()));
     }
 
+    /**
+     * Atrapa los errores de tipo indicado y responde al frontend con un JSON de error (handle acceso
+     * denegado).
+     */
     @ExceptionHandler(AccesoDenegadoException.class)
     public ResponseEntity<Map<String, String>> handleAccesoDenegado(AccesoDenegadoException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("mensaje", ex.getMessage()));
     }
 
+    /**
+     * Atrapa los errores de tipo indicado y responde al frontend con un JSON de error (handle datos
+     * invalidos).
+     */
     @ExceptionHandler(DatosInvalidosException.class)
     public ResponseEntity<Map<String, String>> handleDatosInvalidos(DatosInvalidosException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("mensaje", ex.getMessage()));
     }
 
+    /**
+     * Atrapa los errores de tipo indicado y responde al frontend con un JSON de error (handle
+     * credenciales invalidas).
+     */
     @ExceptionHandler(CredencialesInvalidasException.class)
     public ResponseEntity<Map<String, String>> handleCredencialesInvalidas(CredencialesInvalidasException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("mensaje", ex.getMessage()));

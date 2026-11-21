@@ -27,6 +27,10 @@ class PU11ArchivosTest {
     private ArchivoAdjuntoRepository archivoRepository;
     private ArchivoService servicio;
 
+    /**
+     * Se ejecuta antes de cada prueba: crea los mocks (objetos simulados con Mockito) y los datos de
+     * ejemplo. Guarda los cambios en la base de datos.
+     */
     @BeforeEach
     void setUp() {
         archivoRepository = mock(ArchivoAdjuntoRepository.class);
@@ -40,6 +44,11 @@ class PU11ArchivosTest {
         return new ArchivoDto.Request(nombre, tipo, "data:" + tipo + ";base64," + Base64.getEncoder().encodeToString(datos));
     }
 
+    /**
+     * Caso de prueba: PU-11.1 Archivo con extensión permitida (.pdf): la validación lo acepta. Prepara
+     * los datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert). Guarda
+     * los cambios en la base de datos.
+     */
     @Test
     @DisplayName("PU-11.1 Archivo con extensión permitida (.pdf): la validación lo acepta")
     void c1_extensionPermitida() {
@@ -51,6 +60,11 @@ class PU11ArchivosTest {
         verify(archivoRepository, times(1)).save(any(ArchivoAdjunto.class));
     }
 
+    /**
+     * Caso de prueba: PU-11.2 Archivo .exe: la validación lo rechaza. Prepara los datos (arrange),
+     * ejecuta el método (act) y comprueba el resultado esperado (assert). Guarda los cambios en la
+     * base de datos.
+     */
     @Test
     @DisplayName("PU-11.2 Archivo .exe: la validación lo rechaza")
     void c2_exeRechazado() {
@@ -61,6 +75,11 @@ class PU11ArchivosTest {
         verify(archivoRepository, never()).save(any(ArchivoAdjunto.class));
     }
 
+    /**
+     * Caso de prueba: PU-11.3 Archivo que excede el tamaño máximo (10 MB): se rechaza. Prepara los
+     * datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert). Guarda los
+     * cambios en la base de datos.
+     */
     @Test
     @DisplayName("PU-11.3 Archivo que excede el tamaño máximo (10 MB): se rechaza")
     void c3_excedeTamanio() {

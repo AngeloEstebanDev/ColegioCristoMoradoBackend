@@ -6,6 +6,11 @@ import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+/**
+ * Entidad Docente: representa la tabla «docentes» de la base de datos (los docentes del colegio). Cada
+ * atributo es una columna y cada objeto es una fila. Hibernate (JPA) se encarga de leer y guardar
+ * estos datos. Lombok genera los getters, setters y el builder para no escribirlos a mano.
+ */
 @Entity
 @Table(name = "docentes")
 @Getter

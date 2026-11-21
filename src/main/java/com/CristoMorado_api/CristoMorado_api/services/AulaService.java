@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 
 /**
  * Aula virtual:
- *  HU-13 Materiales compartidos (el docente publica archivos/enlaces; alumnos y padres los ven y descargan).
+ *  HU-13 Materiales compartidos (el docente pública archivos/enlaces; alumnos y padres los ven y descargan).
  *  HU-14 Actividades académicas (tareas, cuestionarios de opción múltiple y actividades).
  *  HU-15 Entregas de los alumnos (el docente las califica; la nota pasa al registro de notas).
  */
@@ -44,6 +44,9 @@ public class AulaService {
     private final MensajeService mensajeService;
     private final CarpetaRepository carpetaRepository;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public AulaService(MaterialRepository materialRepository, ActividadRepository actividadRepository,
                        EntregaRepository entregaRepository, SeccionCursoRepository seccionCursoRepository,
                        SeccionRepository seccionRepository, EstudianteRepository estudianteRepository,
@@ -81,6 +84,9 @@ public class AulaService {
                 .toList();
     }
 
+    /**
+     * Devuelve resumen docente. Solo lee datos (transacción de solo lectura).
+     */
     @Transactional(readOnly = true)
     public AulaDto.ResumenDocente resumenDocente(Long usuarioId) {
         Usuario u = accesoService.exigirDocente(usuarioId);
@@ -116,6 +122,9 @@ public class AulaService {
         return cursosDeEstudiante(accesoService.estudianteVisible(usuarioId, estudianteId));
     }
 
+    /**
+     * Devuelve curso. Solo lee datos (transacción de solo lectura).
+     */
     @Transactional(readOnly = true)
     public AulaDto.CursoAula curso(Long usuarioId, Long seccionCursoId) {
         Usuario u = accesoService.usuario(usuarioId);
@@ -148,6 +157,9 @@ public class AulaService {
     // Materiales (HU-13)
     // ==================================================================
 
+    /**
+     * Devuelve materiales (como lista). Solo lee datos (transacción de solo lectura).
+     */
     @Transactional(readOnly = true)
     public List<AulaDto.MaterialResponse> materiales(Long usuarioId, Long seccionCursoId) {
         SeccionCurso sc = accesoService.cursoVisible(usuarioId, seccionCursoId);
@@ -158,6 +170,10 @@ public class AulaService {
                 .map(this::material).toList();
     }
 
+    /**
+     * Crea material. Se ejecuta en una transacción: si algo falla, no se guarda nada a medias. Guarda
+     * los cambios en la base de datos.
+     */
     @Transactional
     public AulaDto.MaterialResponse crearMaterial(Long usuarioId, Long seccionCursoId, AulaDto.MaterialRequest req) {
         SeccionCurso sc = accesoService.cursoDelDocente(usuarioId, seccionCursoId);
@@ -172,6 +188,10 @@ public class AulaService {
         return material(m);
     }
 
+    /**
+     * Actualiza material. Se ejecuta en una transacción: si algo falla, no se guarda nada a medias. Si
+     * no encuentra el registro, responde con error 404. Guarda los cambios en la base de datos.
+     */
     @Transactional
     public AulaDto.MaterialResponse actualizarMaterial(Long usuarioId, Long materialId, AulaDto.MaterialRequest req) {
         Material m = materialRepository.findById(materialId)
@@ -183,6 +203,10 @@ public class AulaService {
         return material(materialRepository.save(m));
     }
 
+    /**
+     * Elimina material. Se ejecuta en una transacción: si algo falla, no se guarda nada a medias. Si
+     * no encuentra el registro, responde con error 404. Borra registros de la base de datos.
+     */
     @Transactional
     public void eliminarMaterial(Long usuarioId, Long materialId) {
         Material m = materialRepository.findById(materialId)
@@ -208,6 +232,9 @@ public class AulaService {
     // Carpetas del contenido (se crean en el bimestre en curso)
     // ==================================================================
 
+    /**
+     * Devuelve carpetas (como lista). Solo lee datos (transacción de solo lectura).
+     */
     @Transactional(readOnly = true)
     public List<AulaDto.Carpeta> carpetas(Long usuarioId, Long seccionCursoId) {
         SeccionCurso sc = accesoService.cursoVisible(usuarioId, seccionCursoId);
@@ -217,6 +244,11 @@ public class AulaService {
                 .map(AulaService::carpeta).toList();
     }
 
+    /**
+     * Crea carpeta. Se ejecuta en una transacción: si algo falla, no se guarda nada a medias. Si los
+     * datos no son válidos, responde con error 400 y un mensaje claro para el usuario. Guarda los
+     * cambios en la base de datos.
+     */
     @Transactional
     public AulaDto.Carpeta crearCarpeta(Long usuarioId, Long seccionCursoId, AulaDto.CarpetaRequest req) {
         SeccionCurso sc = accesoService.cursoDelDocente(usuarioId, seccionCursoId);
@@ -231,6 +263,10 @@ public class AulaService {
         return carpeta(carpetaRepository.save(Carpeta.builder().seccionCurso(sc).periodo(p).nombre(nombre).build()));
     }
 
+    /**
+     * Devuelve renombrar carpeta. Se ejecuta en una transacción: si algo falla, no se guarda nada a
+     * medias. Guarda los cambios en la base de datos.
+     */
     @Transactional
     public AulaDto.Carpeta renombrarCarpeta(Long usuarioId, Long carpetaId, AulaDto.CarpetaRequest req) {
         Carpeta c = buscarCarpeta(carpetaId);
@@ -239,6 +275,10 @@ public class AulaService {
         return carpeta(carpetaRepository.save(c));
     }
 
+    /**
+     * Devuelve visible carpeta. Se ejecuta en una transacción: si algo falla, no se guarda nada a
+     * medias. Guarda los cambios en la base de datos.
+     */
     @Transactional
     public AulaDto.Carpeta visibleCarpeta(Long usuarioId, Long carpetaId, Boolean visible) {
         Carpeta c = buscarCarpeta(carpetaId);
@@ -265,6 +305,9 @@ public class AulaService {
     // Actividades (HU-14)
     // ==================================================================
 
+    /**
+     * Devuelve actividades (como lista). Solo lee datos (transacción de solo lectura).
+     */
     @Transactional(readOnly = true)
     public List<AulaDto.ActividadResponse> actividades(Long usuarioId, Long seccionCursoId) {
         Usuario u = accesoService.usuario(usuarioId);
@@ -303,6 +346,10 @@ public class AulaService {
         return accesoService.hijos(p).stream().filter(h -> AccesoService.estaEn(h, sc.getSeccion())).findFirst().orElse(null);
     }
 
+    /**
+     * Crea actividad. Se ejecuta en una transacción: si algo falla, no se guarda nada a medias. Guarda
+     * los cambios en la base de datos.
+     */
     @Transactional
     public AulaDto.ActividadResponse crearActividad(Long usuarioId, Long seccionCursoId, AulaDto.ActividadRequest req) {
         SeccionCurso sc = accesoService.cursoDelDocente(usuarioId, seccionCursoId);
@@ -319,6 +366,11 @@ public class AulaService {
         return actividadParaDocente(a, true);
     }
 
+    /**
+     * Actualiza actividad. Se ejecuta en una transacción: si algo falla, no se guarda nada a medias.
+     * Si los datos no son válidos, responde con error 400 y un mensaje claro para el usuario. Guarda
+     * los cambios en la base de datos.
+     */
     @Transactional
     public AulaDto.ActividadResponse actualizarActividad(Long usuarioId, Long actividadId, AulaDto.ActividadRequest req) {
         Actividad a = buscarActividad(actividadId);
@@ -430,6 +482,12 @@ public class AulaService {
     // Entregas (HU-15)
     // ==================================================================
 
+    /**
+     * Devuelve entregar. Se ejecuta en una transacción: si algo falla, no se guarda nada a medias. Si
+     * los datos no son válidos, responde con error 400 y un mensaje claro para el usuario. Si el
+     * usuario no tiene permiso para esta acción, responde con error 403. Guarda los cambios en la base
+     * de datos.
+     */
     @Transactional
     public AulaDto.ActividadResponse entregar(Long usuarioId, Long actividadId, AulaDto.EntregaRequest req) {
         Estudiante e = accesoService.alumnoLogeado(usuarioId);
@@ -518,6 +576,10 @@ public class AulaService {
         return actividadParaAlumno(a, e, true);
     }
 
+    /**
+     * Devuelve entregas. Solo lee datos (transacción de solo lectura). Si el usuario no tiene permiso
+     * para esta acción, responde con error 403.
+     */
     @Transactional(readOnly = true)
     public AulaDto.Entregas entregas(Long usuarioId, Long actividadId) {
         Actividad a = buscarActividad(actividadId);
@@ -562,6 +624,9 @@ public class AulaService {
     // Armado de respuestas
     // ==================================================================
 
+    /**
+     * Devuelve cursos de estudiante (como lista).
+     */
     private List<AulaDto.CursoAula> cursosDeEstudiante(Estudiante e) {
         Optional<Seccion> s = accesoService.seccionDe(e);
         if (s.isEmpty() || !"Activa".equals(s.get().getEstado())) return List.of();
@@ -572,6 +637,9 @@ public class AulaService {
                 .toList();
     }
 
+    /**
+     * Devuelve actividades de (como lista).
+     */
     private List<AulaDto.ActividadResponse> actividadesDe(Estudiante e) {
         List<Long> ids = cursosDeEstudiante(e).stream().map(AulaDto.CursoAula::seccionCursoId).toList();
         if (ids.isEmpty()) return List.of();
@@ -590,6 +658,9 @@ public class AulaService {
         return lista;
     }
 
+    /**
+     * Devuelve curso aula.
+     */
     private AulaDto.CursoAula cursoAula(SeccionCurso sc, Estudiante alumno) {
         Seccion s = sc.getSeccion();
         List<Actividad> acts = actividadRepository.findBySeccionCursoIdOrderByFechaLimiteDesc(sc.getId());
@@ -620,6 +691,9 @@ public class AulaService {
                 accesoService.alumnosDe(s).size(), materiales, acts.size(), porCalificar, pendientes);
     }
 
+    /**
+     * Devuelve material.
+     */
     private AulaDto.MaterialResponse material(Material m) {
         SeccionCurso sc = m.getSeccionCurso();
         String autor = m.getAutorId() == null ? null : usuarioRepository.findById(m.getAutorId()).map(Usuario::getNombre).orElse(null);
@@ -630,6 +704,9 @@ public class AulaService {
                 !Boolean.FALSE.equals(m.getVisible()), m.getCarpetaId());
     }
 
+    /**
+     * Devuelve actividad para docente.
+     */
     private AulaDto.ActividadResponse actividadParaDocente(Actividad a, boolean conRespuestas) {
         SeccionCurso sc = a.getSeccionCurso();
         long total = accesoService.alumnosDe(sc.getSeccion()).size();
@@ -638,6 +715,9 @@ public class AulaService {
         return respuesta(a, preguntas(a, conRespuestas), total, entregadas, calificadas, null, null);
     }
 
+    /**
+     * Devuelve actividad para alumno.
+     */
     private AulaDto.ActividadResponse actividadParaAlumno(Actividad a, Estudiante e, boolean detalle) {
         Entrega en = entregaRepository.findByActividadIdAndEstudianteId(a.getId(), e.getId()).orElse(null);
         String situacion;
@@ -652,6 +732,9 @@ public class AulaService {
         return respuesta(a, preguntas, 0, 0, 0, situacion, en == null ? null : entrega(en));
     }
 
+    /**
+     * Devuelve respuesta.
+     */
     private AulaDto.ActividadResponse respuesta(Actividad a, List<AulaDto.Pregunta> preguntas, long total,
                                                 long entregadas, long calificadas, String situacion,
                                                 AulaDto.EntregaResponse miEntrega) {
@@ -668,6 +751,9 @@ public class AulaService {
                 preguntas, a.getEvaluacionId(), periodo, LocalDateTime.now().isAfter(a.getFechaLimite()),
                 total, entregadas, calificadas, situacion, miEntrega,
                 !Boolean.FALSE.equals(a.getVisible()), intentosPermitidos(a), a.getCarpetaId(),
+                /**
+                 * Devuelve formatos.
+                 */
                 true, formatos(a));
     }
 
@@ -677,6 +763,9 @@ public class AulaService {
         return ArchivoService.normalizarFormatos(f == null || f.isBlank() ? null : List.of(f.split(",")));
     }
 
+    /**
+     * Devuelve preguntas (como lista).
+     */
     private List<AulaDto.Pregunta> preguntas(Actividad a, boolean conRespuestas) {
         return a.getPreguntas().stream()
                 .map(p -> {
@@ -690,6 +779,9 @@ public class AulaService {
                 .toList();
     }
 
+    /**
+     * Devuelve entrega.
+     */
     private AulaDto.EntregaResponse entrega(Entrega en) {
         Actividad a = en.getActividad();
         return new AulaDto.EntregaResponse(en.getId(), a.getId(), en.getEstudiante().getId(),
@@ -724,6 +816,9 @@ public class AulaService {
         return res;
     }
 
+    /**
+     * Construye entregas.
+     */
     private AulaDto.Entregas construirEntregas(Actividad a) {
         Map<Long, Entrega> porAlumno = entregaRepository.findByActividadId(a.getId()).stream()
                 .collect(Collectors.toMap(en -> en.getEstudiante().getId(), en -> en, (x, y) -> x));
@@ -741,6 +836,10 @@ public class AulaService {
     // Validaciones
     // ==================================================================
 
+    /**
+     * Aplica material. Si los datos no son válidos, responde con error 400 y un mensaje claro para el
+     * usuario.
+     */
     private void aplicarMaterial(Material m, AulaDto.MaterialRequest req, Long usuarioId) {
         if (req == null) throw new DatosInvalidosException("Faltan los datos del material.");
         String tipo = req.tipo() == null || req.tipo().isBlank() ? tipoMaterial(m) : req.tipo().trim().toUpperCase();
@@ -884,6 +983,10 @@ public class AulaService {
         }
     }
 
+    /**
+     * Devuelve título (como texto). Si los datos no son válidos, responde con error 400 y un mensaje
+     * claro para el usuario.
+     */
     private static String titulo(String t) {
         String v = t == null ? "" : t.trim().replaceAll("\\s+", " ");
         if (v.isEmpty()) throw new DatosInvalidosException("Escribe el título.");
@@ -891,6 +994,10 @@ public class AulaService {
         return v;
     }
 
+    /**
+     * Devuelve enlace (como texto). Si los datos no son válidos, responde con error 400 y un mensaje
+     * claro para el usuario.
+     */
     private static String enlace(String e) {
         String v = e == null ? "" : e.trim();
         if (v.isEmpty()) return null;
@@ -899,6 +1006,9 @@ public class AulaService {
         return v;
     }
 
+    /**
+     * Pone archivo.
+     */
     private static void ponerArchivo(Entrega en, ArchivoAdjunto a) {
         en.setArchivoId(a.getId());
         en.setArchivoNombre(a.getNombre());
@@ -916,6 +1026,9 @@ public class AulaService {
         return AccesoService.esDocenteDe(usuarioId, sc) || AccesoService.esAdministrativo(u);
     }
 
+    /**
+     * Devuelve carpetas ocultas.
+     */
     private Set<Long> carpetasOcultas(SeccionCurso sc) {
         return carpetaRepository.findBySeccionCursoIdOrderByFechaCreacionAsc(sc.getId()).stream()
                 .filter(c -> Boolean.FALSE.equals(c.getVisible())).map(Carpeta::getId).collect(Collectors.toSet());
@@ -927,6 +1040,10 @@ public class AulaService {
         return lista.stream().filter(a -> !Boolean.FALSE.equals(a.getVisible()) && !ocultas.contains(a.getCarpetaId())).toList();
     }
 
+    /**
+     * Devuelve carpeta del curso. Si los datos no son válidos, responde con error 400 y un mensaje
+     * claro para el usuario.
+     */
     private Long carpetaDelCurso(SeccionCurso sc, Long carpetaId) {
         if (carpetaId == null) return null;
         Carpeta c = buscarCarpeta(carpetaId);
@@ -934,10 +1051,17 @@ public class AulaService {
         return c.getId();
     }
 
+    /**
+     * Busca carpeta. Si no encuentra el registro, responde con error 404.
+     */
     private Carpeta buscarCarpeta(Long id) {
         return carpetaRepository.findById(id).orElseThrow(() -> new RecursoNoEncontradoException("Carpeta no encontrada."));
     }
 
+    /**
+     * Devuelve nombre carpeta (como texto). Si los datos no son válidos, responde con error 400 y un
+     * mensaje claro para el usuario.
+     */
     private static String nombreCarpeta(String n) {
         String v = n == null ? "" : n.trim().replaceAll("\\s+", " ");
         if (v.isEmpty()) throw new DatosInvalidosException("Escribe el nombre de la carpeta.");
@@ -945,6 +1069,9 @@ public class AulaService {
         return v;
     }
 
+    /**
+     * Devuelve carpeta.
+     */
     private static AulaDto.Carpeta carpeta(Carpeta c) {
         Periodo p = c.getPeriodo();
         return new AulaDto.Carpeta(c.getId(), c.getSeccionCurso().getId(), p.getId(), p.getNombre(), p.getBimestre(),
@@ -960,10 +1087,16 @@ public class AulaService {
         return m.getId() == null ? null : "TEXTO";
     }
 
+    /**
+     * Devuelve intentos permitidos.
+     */
     static int intentosPermitidos(Actividad a) {
         return a.getIntentosPermitidos() == null || a.getIntentosPermitidos() < 1 ? 1 : a.getIntentosPermitidos();
     }
 
+    /**
+     * Devuelve intentos.
+     */
     static int intentos(Entrega en) {
         return en.getIntentos() == null ? 1 : en.getIntentos();
     }
@@ -980,6 +1113,9 @@ public class AulaService {
         return res;
     }
 
+    /**
+     * Devuelve selecciones (como lista).
+     */
     private static List<List<Integer>> selecciones(Actividad a, Entrega en) {
         List<List<Integer>> res = new ArrayList<>();
         List<PreguntaCuestionario> ps = a.getPreguntas();
@@ -1021,10 +1157,16 @@ public class AulaService {
         return res;
     }
 
+    /**
+     * Busca actividad. Si no encuentra el registro, responde con error 404.
+     */
     private Actividad buscarActividad(Long id) {
         return actividadRepository.findById(id).orElseThrow(() -> new RecursoNoEncontradoException("Actividad no encontrada."));
     }
 
+    /**
+     * Devuelve docente usuario.
+     */
     private Usuario docenteUsuario(SeccionCurso sc) {
         if (sc.getDocente() == null || sc.getDocente().getUsuarioId() == null) return null;
         return usuarioRepository.findById(sc.getDocente().getUsuarioId()).orElse(null);
@@ -1036,11 +1178,17 @@ public class AulaService {
         if (!alumnos.isEmpty()) mensajeService.enviarAviso(alumnos, asunto, html);
     }
 
+    /**
+     * Devuelve nota 20.
+     */
     static Double nota20(Double puntaje, Double maximo) {
         if (puntaje == null || maximo == null || maximo <= 0) return null;
         return Calificacion.dosDecimales(Math.min(20, puntaje * 20 / maximo));
     }
 
+    /**
+     * Devuelve la etiqueta de tipo.
+     */
     static String etiquetaTipo(String tipo) {
         return switch (tipo) {
             case Actividad.CUESTIONARIO -> "Cuestionario";
@@ -1049,10 +1197,16 @@ public class AulaService {
         };
     }
 
+    /**
+     * Devuelve formato (como texto).
+     */
     private static String formato(double v) {
         return v == Math.floor(v) ? String.valueOf((long) v) : String.valueOf(Calificacion.dosDecimales(v));
     }
 
+    /**
+     * Devuelve orden cursos.
+     */
     private static Comparator<SeccionCurso> ordenCursos() {
         return Comparator.comparingInt((SeccionCurso sc) -> Grados.orden(sc.getSeccion().getGrado()))
                 .thenComparing(sc -> sc.getSeccion().getLetra())

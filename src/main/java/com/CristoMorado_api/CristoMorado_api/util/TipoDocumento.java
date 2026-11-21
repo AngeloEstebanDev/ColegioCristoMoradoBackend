@@ -20,6 +20,9 @@ public final class TipoDocumento {
     public static final String OTRO = "OTRO";
     public static final List<String> TODOS = List.of(DNI, CE, PASAPORTE, OTRO);
 
+    /**
+     * Constructor de TipoDocumento.
+     */
     private TipoDocumento() {}
 
     /** Vacío = DNI. Rechaza tipos desconocidos. */

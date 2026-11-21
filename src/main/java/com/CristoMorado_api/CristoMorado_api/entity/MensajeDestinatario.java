@@ -11,6 +11,12 @@ import java.time.LocalDateTime;
         uniqueConstraints = @UniqueConstraint(
                 name = "mensaje_destinatarios_unique",
                 columnNames = {"mensaje_id", "destinatario_id"}))
+/**
+ * Entidad MensajeDestinatario: representa la tabla «mensaje_destinatarios» de la base de datos (los
+ * destinatarios de cada mensaje (y si ya lo leyeron)). Cada atributo es una columna y cada objeto es
+ * una fila. Hibernate (JPA) se encarga de leer y guardar estos datos. Lombok genera los getters,
+ * setters y el builder para no escribirlos a mano.
+ */
 @Getter
 @Setter
 @NoArgsConstructor

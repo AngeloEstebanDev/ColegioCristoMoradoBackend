@@ -45,6 +45,9 @@ public class AsistenciaService {
     private final HorarioBloqueRepository bloqueRepository;
     private final PeriodoRepository periodoRepository;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public AsistenciaService(AsistenciaRepository asistenciaRepository, EstudianteRepository estudianteRepository,
                              AccesoService accesoService, MensajeService mensajeService,
                              SesionAsistenciaRepository sesionRepository, HorarioBloqueRepository bloqueRepository,
@@ -65,6 +68,11 @@ public class AsistenciaService {
         return construirDia(sc, fecha == null ? LocalDate.now() : fecha);
     }
 
+    /**
+     * Guarda la asistencia de los alumnos. Se ejecuta en una transacción: si algo falla, no se guarda
+     * nada a medias. Si los datos no son válidos, responde con error 400 y un mensaje claro para el
+     * usuario. Guarda los cambios en la base de datos.
+     */
     @Transactional
     public AsistenciaDto.Dia guardar(Long usuarioId, Long seccionCursoId, AsistenciaDto.GuardarRequest req) {
         SeccionCurso sc = accesoService.cursoDelDocente(usuarioId, seccionCursoId);
@@ -134,12 +142,20 @@ public class AsistenciaService {
     // Sesiones (generar asistencia en la hora de clase)
     // ------------------------------------------------------------------
 
+    /**
+     * Devuelve sesiones. Solo lee datos (transacción de solo lectura).
+     */
     @Transactional(readOnly = true)
     public AsistenciaDto.Sesiones sesiones(Long usuarioId, Long seccionCursoId) {
         SeccionCurso sc = cursoParaLeer(usuarioId, seccionCursoId);
         return construirSesiones(sc, LocalDateTime.now());
     }
 
+    /**
+     * Genera la asistencia de los alumnos. Se ejecuta en una transacción: si algo falla, no se guarda
+     * nada a medias. Si los datos no son válidos, responde con error 400 y un mensaje claro para el
+     * usuario. Guarda los cambios en la base de datos.
+     */
     @Transactional
     public AsistenciaDto.Sesiones generar(Long usuarioId, Long seccionCursoId) {
         SeccionCurso sc = accesoService.cursoDelDocente(usuarioId, seccionCursoId);
@@ -162,6 +178,10 @@ public class AsistenciaService {
         return construirSesiones(sc, ahora);
     }
 
+    /**
+     * Estructura de datos Clase (record): agrupa clase en un solo objeto inmutable que viaja como
+     * JSON.
+     */
     private record Clase(LocalTime inicio, LocalTime fin) {}
 
     /** Primera y última hora del curso ese día según el horario (null si no hay clase). */
@@ -169,6 +189,9 @@ public class AsistenciaService {
         return claseDelDia(bloqueRepository.findBySeccionCursoId(sc.getId()), fecha);
     }
 
+    /**
+     * Devuelve clase del día.
+     */
     private static Clase claseDelDia(List<HorarioBloque> bloques, LocalDate fecha) {
         int dia = fecha.getDayOfWeek().getValue();
         LocalTime ini = null, fin = null;
@@ -180,6 +203,9 @@ public class AsistenciaService {
         return ini == null ? null : new Clase(ini, fin);
     }
 
+    /**
+     * Construye sesiones.
+     */
     private AsistenciaDto.Sesiones construirSesiones(SeccionCurso sc, LocalDateTime ahora) {
         LocalDate hoy = ahora.toLocalDate();
         List<HorarioBloque> bloques = bloqueRepository.findBySeccionCursoId(sc.getId());
@@ -260,6 +286,9 @@ public class AsistenciaService {
         return construirDelAlumno(accesoService.estudianteVisible(usuarioId, estudianteId), desde, hasta);
     }
 
+    /**
+     * Devuelve mía. Solo lee datos (transacción de solo lectura).
+     */
     @Transactional(readOnly = true)
     public AsistenciaDto.DelAlumno mia(Long usuarioId, LocalDate desde, LocalDate hasta) {
         return construirDelAlumno(accesoService.alumnoLogeado(usuarioId), desde, hasta);
@@ -284,6 +313,9 @@ public class AsistenciaService {
 
     // ------------------------------------------------------------------
 
+    /**
+     * Construye día.
+     */
     private AsistenciaDto.Dia construirDia(SeccionCurso sc, LocalDate fecha) {
         Map<Long, Asistencia> registradas = asistenciaRepository.findBySeccionCursoIdAndFecha(sc.getId(), fecha).stream()
                 .collect(Collectors.toMap(a -> a.getEstudiante().getId(), a -> a, (a, b) -> a));
@@ -302,6 +334,9 @@ public class AsistenciaService {
                 sc.getSeccion().getLetra(), fecha, !registradas.isEmpty(), new ArrayList<>(filas.values()), fechas);
     }
 
+    /**
+     * Construye del alumno.
+     */
     private AsistenciaDto.DelAlumno construirDelAlumno(Estudiante e, LocalDate desde, LocalDate hasta) {
         LocalDate d = desde == null ? LocalDate.now().withDayOfYear(1) : desde;
         LocalDate h = hasta == null ? LocalDate.now() : hasta;
@@ -323,6 +358,9 @@ public class AsistenciaService {
                 conteo(lista), cursos, detalle);
     }
 
+    /**
+     * Avisa faltas.
+     */
     private void avisarFaltas(SeccionCurso sc, LocalDate fecha, List<Estudiante> faltas) {
         for (Estudiante e : faltas) {
             List<Usuario> padres = accesoService.padresDe(e);
@@ -334,10 +372,17 @@ public class AsistenciaService {
         }
     }
 
+    /**
+     * Devuelve curso para leer. Si el usuario no tiene permiso para esta acción, responde con error
+     * 403.
+     */
     private SeccionCurso cursoParaLeer(Long usuarioId, Long seccionCursoId) {
         Usuario u = accesoService.usuario(usuarioId);
         SeccionCurso sc = accesoService.seccionCurso(seccionCursoId);
         if (AccesoService.esDocenteDe(u.getId(), sc) || AccesoService.esAdministrativo(u)) return sc;
+        /**
+         * Devuelve acceso denegado exception.
+         */
         throw new AccesoDenegadoException("Este curso no está a tu cargo.");
     }
 }

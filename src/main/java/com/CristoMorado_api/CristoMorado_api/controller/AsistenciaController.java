@@ -17,10 +17,17 @@ public class AsistenciaController {
 
     private final AsistenciaService asistenciaService;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public AsistenciaController(AsistenciaService asistenciaService) {
         this.asistenciaService = asistenciaService;
     }
 
+    /**
+     * Endpoint GET /api/asistencia/cursos/{seccionCursoId} — Devuelve día. La lógica está en
+     * asistenciaService.dia().
+     */
     @GetMapping("/cursos/{seccionCursoId}")
     public AsistenciaDto.Dia dia(@PathVariable Long seccionCursoId,
                                  @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
@@ -28,6 +35,10 @@ public class AsistenciaController {
         return asistenciaService.dia(usuarioId, seccionCursoId, fecha);
     }
 
+    /**
+     * Endpoint PUT /api/asistencia/cursos/{seccionCursoId} — Guarda la asistencia de los alumnos. La
+     * lógica está en asistenciaService.guardar().
+     */
     @PutMapping("/cursos/{seccionCursoId}")
     public AsistenciaDto.Dia guardar(@PathVariable Long seccionCursoId, @RequestBody AsistenciaDto.GuardarRequest req,
                                      @RequestHeader(value = USUARIO, required = false) Long usuarioId) {
@@ -48,6 +59,10 @@ public class AsistenciaController {
         return asistenciaService.generar(usuarioId, seccionCursoId);
     }
 
+    /**
+     * Endpoint GET /api/asistencia/cursos/{seccionCursoId}/resumen — Devuelve resumen. La lógica está
+     * en asistenciaService.resumenCurso().
+     */
     @GetMapping("/cursos/{seccionCursoId}/resumen")
     public AsistenciaDto.ResumenCurso resumen(@PathVariable Long seccionCursoId,
                                               @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
@@ -56,6 +71,9 @@ public class AsistenciaController {
         return asistenciaService.resumenCurso(usuarioId, seccionCursoId, desde, hasta);
     }
 
+    /**
+     * Endpoint GET /api/asistencia/mia — Devuelve mía. La lógica está en asistenciaService.mia().
+     */
     @GetMapping("/mia")
     public AsistenciaDto.DelAlumno mia(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
                                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
@@ -63,6 +81,10 @@ public class AsistenciaController {
         return asistenciaService.mia(usuarioId, desde, hasta);
     }
 
+    /**
+     * Endpoint GET /api/asistencia/estudiantes/{estudianteId} — Devuelve del alumno. La lógica está en
+     * asistenciaService.delAlumno().
+     */
     @GetMapping("/estudiantes/{estudianteId}")
     public AsistenciaDto.DelAlumno delAlumno(@PathVariable Long estudianteId,
                                              @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,

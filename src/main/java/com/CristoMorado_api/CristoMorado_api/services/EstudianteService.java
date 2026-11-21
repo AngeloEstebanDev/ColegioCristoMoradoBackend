@@ -21,6 +21,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * Servicio de los estudiantes. Aquí está la lógica de negocio: valida los datos, aplica las reglas del
+ * colegio y usa los repositorios para leer o guardar en la base de datos. Los controladores llaman a
+ * estos métodos.
+ */
 @Service
 public class EstudianteService {
 
@@ -33,6 +38,9 @@ public class EstudianteService {
     private final CuentaService cuentaService;
     private final LimpiezaUsuarioService limpiezaUsuarioService;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public EstudianteService(EstudianteRepository estudianteRepository,
                               PadreFamiliaRepository padreFamiliaRepository,
                               EstudianteFamiliarRepository vinculoRepository,
@@ -45,6 +53,9 @@ public class EstudianteService {
         this.limpiezaUsuarioService = limpiezaUsuarioService;
     }
 
+    /**
+     * Devuelve la lista de los estudiantes. Solo lee datos (transacción de solo lectura).
+     */
     @Transactional(readOnly = true)
     public List<EstudianteResponse> listar() {
         return estudianteRepository.findAll().stream()
@@ -52,11 +63,19 @@ public class EstudianteService {
                 .toList();
     }
 
+    /**
+     * Obtiene el estudiante indicado por su id. Solo lee datos (transacción de solo lectura).
+     */
     @Transactional(readOnly = true)
     public EstudianteResponse obtener(Long id) {
         return EstudianteResponse.fromEntity(buscarOFallar(id));
     }
 
+    /**
+     * Crea un nuevo registro (el estudiante) con los datos recibidos. Se ejecuta en una transacción:
+     * si algo falla, no se guarda nada a medias. Si el dato ya existe (por ejemplo, un DNI o usuario
+     * repetido), responde con error 409. Guarda los cambios en la base de datos.
+     */
     @Transactional
     public EstudianteResponse crear(EstudianteRequest req) {
         String documento = TipoDocumento.validarNumero(req.tipoDocumento(), req.dni());
@@ -70,6 +89,11 @@ public class EstudianteService {
         return EstudianteResponse.fromEntity(estudianteRepository.findById(e.getId()).orElseThrow());
     }
 
+    /**
+     * Actualiza los datos del estudiante indicado por su id. Se ejecuta en una transacción: si algo
+     * falla, no se guarda nada a medias. Si el dato ya existe (por ejemplo, un DNI o usuario
+     * repetido), responde con error 409. Guarda los cambios en la base de datos.
+     */
     @Transactional
     public EstudianteResponse actualizar(Long id, EstudianteRequest req) {
         Estudiante e = buscarOFallar(id);
@@ -101,6 +125,10 @@ public class EstudianteService {
         return EstudianteResponse.fromEntity(e);
     }
 
+    /**
+     * Elimina el estudiante indicado por su id. Se ejecuta en una transacción: si algo falla, no se
+     * guarda nada a medias. Borra registros de la base de datos.
+     */
     @Transactional
     public void eliminar(Long id) {
         Estudiante e = buscarOFallar(id);
@@ -113,10 +141,16 @@ public class EstudianteService {
         cuentaService.eliminar(cuenta);
     }
 
+    /**
+     * Cuenta total.
+     */
     long contarTotal() {
         return estudianteRepository.count();
     }
 
+    /**
+     * Devuelve últimos registrados (como lista).
+     */
     List<Estudiante> ultimosRegistrados() {
         return estudianteRepository.findTop5ByOrderByFechaRegistroDesc();
     }
@@ -125,6 +159,9 @@ public class EstudianteService {
     // Cuenta de acceso del alumno
     // ------------------------------------------------------------------
 
+    /**
+     * Crea cuenta.
+     */
     private Usuario crearCuenta(Estudiante e, String password) {
         return cuentaService.crear(UsuarioFormato.ALUMNO, e.getDni(), e.getNombreCompleto(), ROL_ALUMNO,
                 password, !"Inactivo".equalsIgnoreCase(e.getEstado()));
@@ -145,6 +182,9 @@ public class EstudianteService {
                 !"Inactivo".equalsIgnoreCase(e.getEstado()), req.password());
     }
 
+    /**
+     * Convierte datos.
+     */
     private Estudiante mapearDatos(Estudiante e, EstudianteRequest req) {
         e.setNombreCompleto(UsuarioFormato.nombreCompleto(req.nombreCompleto()));
         e.setTipoDocumento(TipoDocumento.normalizar(req.tipoDocumento()));
@@ -166,6 +206,10 @@ public class EstudianteService {
         return e;
     }
 
+    /**
+     * Busca el registro por su id; si no existe, lanza RecursoNoEncontradoException (error 404). Si no
+     * encuentra el registro, responde con error 404.
+     */
     private Estudiante buscarOFallar(Long id) {
         return estudianteRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Estudiante no encontrado."));

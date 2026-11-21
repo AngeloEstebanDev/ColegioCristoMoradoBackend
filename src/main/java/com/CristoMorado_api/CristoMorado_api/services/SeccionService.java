@@ -32,6 +32,9 @@ public class SeccionService {
     private final EstudianteRepository estudianteRepository;
     private final DocenteRepository docenteRepository;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public SeccionService(SeccionRepository seccionRepository, SeccionCursoRepository seccionCursoRepository,
                           CursoRepository cursoRepository, EstudianteRepository estudianteRepository,
                           DocenteRepository docenteRepository) {
@@ -46,6 +49,10 @@ public class SeccionService {
     // Consultas
     // ------------------------------------------------------------------
 
+    /**
+     * Devuelve la lista de los grados, secciones, cursos por sección y horarios. Solo lee datos
+     * (transacción de solo lectura).
+     */
     @Transactional(readOnly = true)
     public List<SeccionResponse> listar(String grado) {
         return seccionRepository.findAll().stream()
@@ -56,11 +63,17 @@ public class SeccionService {
                 .toList();
     }
 
+    /**
+     * Obtiene la sección indicado por su id. Solo lee datos (transacción de solo lectura).
+     */
     @Transactional(readOnly = true)
     public SeccionResponse obtener(Long id) {
         return detalle(buscar(id));
     }
 
+    /**
+     * Devuelve catalogo cursos (como lista). Solo lee datos (transacción de solo lectura).
+     */
     @Transactional(readOnly = true)
     public List<CursoResponse> catalogoCursos() {
         return cursoRepository.findByEstadoOrderByNombreAsc("Activo").stream().map(CursoResponse::fromEntity).toList();
@@ -70,6 +83,12 @@ public class SeccionService {
     // Sección
     // ------------------------------------------------------------------
 
+    /**
+     * Crea un nuevo registro (la sección) con los datos recibidos. Se ejecuta en una transacción: si
+     * algo falla, no se guarda nada a medias. Si los datos no son válidos, responde con error 400 y un
+     * mensaje claro para el usuario. Si el dato ya existe (por ejemplo, un DNI o usuario repetido),
+     * responde con error 409. Guarda los cambios en la base de datos.
+     */
     @Transactional
     public SeccionResponse crear(SeccionRequest req) {
         if (req == null || !Grados.valido(req.grado())) throw new DatosInvalidosException("Selecciona un grado válido.");
@@ -101,6 +120,10 @@ public class SeccionService {
         return detalle(seccionRepository.save(s));
     }
 
+    /**
+     * Cambia estado. Se ejecuta en una transacción: si algo falla, no se guarda nada a medias. Guarda
+     * los cambios en la base de datos.
+     */
     @Transactional
     public SeccionResponse cambiarEstado(Long id, boolean activa) {
         Seccion s = buscar(id);
@@ -120,6 +143,12 @@ public class SeccionService {
     // Alumnos
     // ------------------------------------------------------------------
 
+    /**
+     * Devuelve matricular. Se ejecuta en una transacción: si algo falla, no se guarda nada a medias.
+     * Si no encuentra el registro, responde con error 404. Si los datos no son válidos, responde con
+     * error 400 y un mensaje claro para el usuario. Si el dato ya existe (por ejemplo, un DNI o
+     * usuario repetido), responde con error 409. Guarda los cambios en la base de datos.
+     */
     @Transactional
     public SeccionResponse matricular(Long id, Long estudianteId) {
         Seccion s = buscar(id);
@@ -140,6 +169,12 @@ public class SeccionService {
         return detalle(s);
     }
 
+    /**
+     * Retira los grados, secciones, cursos por sección y horarios. Se ejecuta en una transacción: si
+     * algo falla, no se guarda nada a medias. Si no encuentra el registro, responde con error 404. Si
+     * los datos no son válidos, responde con error 400 y un mensaje claro para el usuario. Guarda los
+     * cambios en la base de datos.
+     */
     @Transactional
     public SeccionResponse retirar(Long id, Long estudianteId) {
         Seccion s = buscar(id);
@@ -158,6 +193,12 @@ public class SeccionService {
     // Cursos
     // ------------------------------------------------------------------
 
+    /**
+     * Agrega curso. Se ejecuta en una transacción: si algo falla, no se guarda nada a medias. Si no
+     * encuentra el registro, responde con error 404. Si los datos no son válidos, responde con error
+     * 400 y un mensaje claro para el usuario. Si el dato ya existe (por ejemplo, un DNI o usuario
+     * repetido), responde con error 409. Guarda los cambios en la base de datos.
+     */
     @Transactional
     public SeccionResponse agregarCurso(Long id, Long cursoId, Long docenteId, String descripcion) {
         Seccion s = buscar(id);
@@ -195,6 +236,10 @@ public class SeccionService {
         return detalle(sc.getSeccion());
     }
 
+    /**
+     * Cambia estado curso. Se ejecuta en una transacción: si algo falla, no se guarda nada a medias.
+     * Guarda los cambios en la base de datos.
+     */
     @Transactional
     public SeccionResponse cambiarEstadoCurso(Long id, Long seccionCursoId, boolean activo) {
         SeccionCurso sc = cursoDeSeccion(id, seccionCursoId);
@@ -207,11 +252,17 @@ public class SeccionService {
     // Ayudas
     // ------------------------------------------------------------------
 
+    /**
+     * Devuelve resumen.
+     */
     private SeccionResponse resumen(Seccion s) {
         long cursos = seccionCursoRepository.findBySeccionId(s.getId()).size();
         return SeccionResponse.of(s, contarAlumnos(s), cursos, List.of(), List.of());
     }
 
+    /**
+     * Devuelve detalle.
+     */
     private SeccionResponse detalle(Seccion s) {
         List<SeccionResponse.Alumno> alumnos = estudianteRepository
                 .findByGradoAndSeccionOrderByNombreCompletoAsc(s.getGrado(), s.getLetra()).stream()
@@ -232,10 +283,16 @@ public class SeccionService {
         return SeccionResponse.of(s, alumnos.size(), cursos.size(), alumnos, cursos);
     }
 
+    /**
+     * Cuenta alumnos.
+     */
     private long contarAlumnos(Seccion s) {
         return estudianteRepository.countByGradoAndSeccion(s.getGrado(), s.getLetra());
     }
 
+    /**
+     * Devuelve curso de sección. Si no encuentra el registro, responde con error 404.
+     */
     private SeccionCurso cursoDeSeccion(Long seccionId, Long seccionCursoId) {
         SeccionCurso sc = seccionCursoRepository.findById(seccionCursoId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Curso de la sección no encontrado."));
@@ -257,6 +314,10 @@ public class SeccionService {
         return d;
     }
 
+    /**
+     * Devuelve docente activo. Si no encuentra el registro, responde con error 404. Si los datos no
+     * son válidos, responde con error 400 y un mensaje claro para el usuario.
+     */
     private Docente docenteActivo(Long docenteId) {
         Docente d = docenteRepository.findById(docenteId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Docente no encontrado."));
@@ -266,6 +327,10 @@ public class SeccionService {
         return d;
     }
 
+    /**
+     * Devuelve capacidad. Si los datos no son válidos, responde con error 400 y un mensaje claro para
+     * el usuario.
+     */
     private static int capacidad(Integer capacidad, long minimo) {
         int c = capacidad == null ? 35 : capacidad;
         if (c < 1 || c > CAPACIDAD_MAX) throw new DatosInvalidosException("La capacidad debe estar entre 1 y " + CAPACIDAD_MAX + ".");
@@ -273,6 +338,9 @@ public class SeccionService {
         return c;
     }
 
+    /**
+     * Busca la sección indicado por su id. Si no encuentra el registro, responde con error 404.
+     */
     private Seccion buscar(Long id) {
         return seccionRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Sección no encontrada."));

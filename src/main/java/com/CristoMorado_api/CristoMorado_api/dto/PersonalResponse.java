@@ -8,6 +8,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * DTO de salida PersonalResponse: datos que el backend devuelve al frontend (en JSON) sobre la
+ * directiva y el personal administrativo. Se arma a partir de la entidad para enviar solo lo necesario
+ * (por ejemplo, nunca la contraseña).
+ */
 public record PersonalResponse(
         Long id,
         String tipoDocumento,
@@ -30,6 +35,9 @@ public record PersonalResponse(
         Boolean correoVerificado,
         Boolean cuentaActiva
 ) {
+    /**
+     * Convierte la entidad en este DTO, copiando solo los datos que necesita el frontend.
+     */
     public static PersonalResponse fromEntity(Personal p) {
         Usuario u = p.getUsuario();
         // Se devuelven en el orden del enum para que la vista sea estable.

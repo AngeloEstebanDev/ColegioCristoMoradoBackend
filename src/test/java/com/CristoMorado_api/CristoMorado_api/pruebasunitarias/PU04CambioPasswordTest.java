@@ -34,6 +34,10 @@ class PU04CambioPasswordTest {
     private VerificacionService servicio;
     private Usuario juan;
 
+    /**
+     * Se ejecuta antes de cada prueba: crea los mocks (objetos simulados con Mockito) y los datos de
+     * ejemplo. Guarda los cambios en la base de datos.
+     */
     @BeforeEach
     void setUp() throws Exception {
         codigoRepository = mock(CodigoVerificacionRepository.class);
@@ -50,11 +54,19 @@ class PU04CambioPasswordTest {
                 CodigoVerificacion.CAMBIO_PASSWORD)).thenReturn(Optional.of(c));
     }
 
+    /**
+     * Devuelve hash (como texto).
+     */
     private static String hash(String codigo, Long usuarioId) throws Exception {
         MessageDigest md = MessageDigest.getInstance("SHA-256");
         return HexFormat.of().formatHex(md.digest((codigo + ":" + usuarioId).getBytes(StandardCharsets.UTF_8)));
     }
 
+    /**
+     * Caso de prueba: PU-04.1 Contraseña actual incorrecta: el cambio se rechaza. Prepara los datos
+     * (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert). Guarda los
+     * cambios en la base de datos.
+     */
     @Test
     @DisplayName("PU-04.1 Contraseña actual incorrecta: el cambio se rechaza")
     void c1_actualIncorrecta() {
@@ -66,6 +78,11 @@ class PU04CambioPasswordTest {
         verify(usuarioRepository, never()).save(any(Usuario.class));
     }
 
+    /**
+     * Caso de prueba: PU-04.3 Datos válidos (actual correcta, nueva válida y código correcto): el
+     * cambio se completa. Prepara los datos (arrange), ejecuta el método (act) y comprueba el
+     * resultado esperado (assert). Guarda los cambios en la base de datos.
+     */
     @Test
     @DisplayName("PU-04.3 Datos válidos (actual correcta, nueva válida y código correcto): el cambio se completa")
     void c3_cambioCorrecto() {

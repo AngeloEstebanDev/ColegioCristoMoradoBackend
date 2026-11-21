@@ -2,6 +2,11 @@ package com.CristoMorado_api.CristoMorado_api.dto;
 
 import java.time.LocalDate;
 
+/**
+ * DTO de entrada EstudianteRequest: datos que el frontend envía al backend (en JSON) sobre los
+ * estudiantes. Un DTO (Data Transfer Object) es solo un "paquete" de datos: no tiene lógica ni se
+ * guarda directamente.
+ */
 public record EstudianteRequest(
         String nombreCompleto,
         String tipoDocumento,  // DNI | CE | PASAPORTE | OTRO (vacío = DNI)

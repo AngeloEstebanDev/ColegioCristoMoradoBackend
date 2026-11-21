@@ -5,6 +5,12 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+/**
+ * Entidad Usuario: representa la tabla «usuarios» de la base de datos (las cuentas de acceso al
+ * sistema (usuario, contraseña, rol y estado)). Cada atributo es una columna y cada objeto es una
+ * fila. Hibernate (JPA) se encarga de leer y guardar estos datos. Lombok genera los getters, setters y
+ * el builder para no escribirlos a mano.
+ */
 @Entity
 @Table(name = "usuarios")
 @Getter

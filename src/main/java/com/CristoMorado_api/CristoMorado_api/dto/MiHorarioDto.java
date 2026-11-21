@@ -5,8 +5,15 @@ import java.util.List;
 /** Vista del alumno: su horario y sus cursos (solo lectura). */
 public final class MiHorarioDto {
 
+    /**
+     * Constructor de MiHorarioDto.
+     */
     private MiHorarioDto() {}
 
+    /**
+     * Estructura de datos Curso (record): agrupa curso en un solo objeto inmutable que viaja como
+     * JSON.
+     */
     public record Curso(Long id, String nombre, String categoria, String categoriaNombre, String color,
                         String descripcion, String docente, int minutosSemana, List<HorarioDto.Bloque> bloques) {}
 
@@ -20,6 +27,10 @@ public final class MiHorarioDto {
 
     // ---------------- Docente ----------------
 
+    /**
+     * Estructura de datos BloqueDocente (record): agrupa bloque docente en un solo objeto inmutable
+     * que viaja como JSON.
+     */
     public record BloqueDocente(Long seccionCursoId, String curso, String color, String categoria, String grado,
                                 String letra, Integer dia, String horaInicio, String horaFin) {}
 

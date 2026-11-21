@@ -27,6 +27,13 @@ import java.time.Duration;
  *  2. BREVO_API_KEY definida: API HTTPS de Brevo.
  *  3. Si no: Gmail por SMTP (spring.mail.*, variables MAIL_USERNAME y MAIL_PASSWORD).
  * El código solo se envía al correo: no se muestra en pantalla.
+ *
+ * Modo consola (solo para tu computadora): si en local.properties pones MAIL_MODO_CONSOLA=true y el
+ * correo no está configurado o no se pudo enviar, el código se escribe en la consola del backend para
+ * poder seguir con la demostración. En Render nunca se define, así que allí no se usa.
+ *
+ * Si algo falla, la consola (o los "Logs" de Render) muestra una línea que empieza con [CORREO]
+ * explicando la causa exacta (secreto distinto, URL equivocada, script sin permiso, sin internet...).
  */
 @Service
 public class CorreoService {
@@ -38,24 +45,81 @@ public class CorreoService {
     private final String brevoApiKey;
     private final String relayUrl;
     private final String relaySecreto;
+    private final boolean modoConsola;
     // Apps Script responde con una redirección (302): se sigue automáticamente.
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10))
             .followRedirects(HttpClient.Redirect.NORMAL).build();
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public CorreoService(ObjectProvider<JavaMailSender> mailSender,
                          @Value("${app.correo.remitente:${spring.mail.username:}}") String remitente,
                          @Value("${app.correo.brevo-api-key:}") String brevoApiKey,
                          @Value("${app.correo.relay-url:}") String relayUrl,
-                         @Value("${app.correo.relay-secreto:}") String relaySecreto) {
+                         @Value("${app.correo.relay-secreto:}") String relaySecreto,
+                         @Value("${app.correo.modo-consola:false}") boolean modoConsola) {
         this.mailSender = mailSender;
         this.remitente = remitente;
         this.brevoApiKey = brevoApiKey == null ? "" : brevoApiKey.trim();
         this.relayUrl = relayUrl == null ? "" : relayUrl.trim();
         this.relaySecreto = relaySecreto == null ? "" : relaySecreto.trim();
+        this.modoConsola = modoConsola;
+        log.info("[CORREO] Método de envío: {}", descripcion());
+        if (!this.relayUrl.isEmpty() && this.relaySecreto.isEmpty()) {
+            log.warn("[CORREO] MAIL_RELAY_URL está definida pero MAIL_RELAY_SECRET está vacía: el Apps Script responderá \"no autorizado\".");
+        }
+        if (!this.relayUrl.isEmpty() && !this.relayUrl.endsWith("/exec")) {
+            log.warn("[CORREO] MAIL_RELAY_URL debería terminar en /exec (la URL de la implementación, no la del editor).");
+        }
     }
 
-    /** Envía el código al Gmail. El código nunca se muestra en pantalla ni en la consola. */
+    /** Qué forma de envío se usará: APPS_SCRIPT, BREVO, SMTP, CONSOLA o NINGUNO (sin mostrar claves). */
+    public String metodo() {
+        if (!relayUrl.isEmpty()) return "APPS_SCRIPT";
+        if (!brevoApiKey.isEmpty()) return "BREVO";
+        if (mailSender.getIfAvailable() != null && remitente != null && !remitente.isBlank()) return "SMTP";
+        return modoConsola ? "CONSOLA" : "NINGUNO";
+    }
+
+    /** Si está activo el modo consola (solo local). */
+    public boolean isModoConsola() {
+        return modoConsola;
+    }
+
+    /** Texto para la consola al arrancar: dice qué método se usará y qué falta. */
+    private String descripcion() {
+        return switch (metodo()) {
+            case "APPS_SCRIPT" -> "Apps Script (MAIL_RELAY_URL)" + (modoConsola ? " + modo consola si falla" : "");
+            case "BREVO" -> "Brevo (BREVO_API_KEY)" + (modoConsola ? " + modo consola si falla" : "");
+            case "SMTP" -> "Gmail SMTP (" + remitente + ")" + (modoConsola ? " + modo consola si falla" : "");
+            case "CONSOLA" -> "MODO CONSOLA: los códigos se mostrarán aquí, no se envían correos (solo para pruebas locales)";
+            default -> "NINGUNO. Vincular Gmail y cambiar contraseña darán error. En local agrega MAIL_RELAY_URL y "
+                    + "MAIL_RELAY_SECRET (los mismos de Render) a local.properties, o MAIL_MODO_CONSOLA=true.";
+        };
+    }
+
+    /**
+     * Envía el código al Gmail. El código nunca se muestra en pantalla; solo se escribe en la consola
+     * si el modo consola (local) está activo y el correo no se pudo enviar.
+     */
     public void enviarCodigo(String para, String nombre, String codigo, String motivo, int minutosValidez) {
+        try {
+            enviarCodigoPorCorreo(para, nombre, codigo, motivo, minutosValidez);
+        } catch (DatosInvalidosException e) {
+            if (!modoConsola) throw e;
+            log.warn("""
+
+                    ============================================================
+                    [CORREO] MODO CONSOLA (solo local): el correo NO se envió.
+                      Para: {}   Motivo: {}
+                      CÓDIGO: {}   (vence en {} minutos)
+                    ============================================================""", para, motivo, codigo, minutosValidez);
+        }
+    }
+
+    /** Intenta el envío real con el método configurado (Apps Script, Brevo o SMTP). */
+    private void enviarCodigoPorCorreo(String para, String nombre, String codigo, String motivo, int minutosValidez) {
         if (!relayUrl.isEmpty()) {
             enviarPorAppsScript(para, "Tu código de verificación: " + codigo, html(nombre, codigo, motivo, minutosValidez));
             return;
@@ -66,6 +130,7 @@ public class CorreoService {
         }
         JavaMailSender sender = mailSender.getIfAvailable();
         if (sender == null || remitente == null || remitente.isBlank()) {
+            log.error("[CORREO] No hay ningún método de envío configurado (MAIL_RELAY_URL, BREVO_API_KEY o MAIL_USERNAME/MAIL_PASSWORD).");
             throw new DatosInvalidosException("El envío de correos no está configurado. Por favor, " + Soporte.ESCRIBE_A_SOPORTE + ".");
         }
         try {
@@ -77,7 +142,8 @@ public class CorreoService {
             helper.setText(html(nombre, codigo, motivo, minutosValidez), true);
             sender.send(mensaje);
         } catch (Exception e) {
-            log.error("No se pudo enviar el correo a {}: {}", para, e.getMessage());
+            log.error("[CORREO] Gmail SMTP falló al enviar a {}: {} (revisa MAIL_USERNAME y que MAIL_PASSWORD sea una "
+                    + "contraseña de aplicación de 16 letras; en Render el SMTP está bloqueado, usa MAIL_RELAY_URL)", para, e.getMessage());
             throw new DatosInvalidosException("No se pudo enviar el correo. Revisa el Gmail o intenta más tarde.");
         }
     }
@@ -96,7 +162,8 @@ public class CorreoService {
             HttpResponse<String> res = http.send(req, HttpResponse.BodyHandlers.ofString());
             String body = res.body() == null ? "" : res.body();
             if (res.statusCode() / 100 != 2 || !body.replace(" ", "").contains("\"ok\":true")) {
-                log.error("Apps Script respondió {} al enviar a {}: {}", res.statusCode(), para,
+                log.error("[CORREO] Apps Script respondió {} al enviar a {}. Causa probable: {}. Respuesta: {}",
+                        res.statusCode(), para, causaAppsScript(res.statusCode(), body),
                         body.length() > 300 ? body.substring(0, 300) : body);
                 throw new DatosInvalidosException("No se pudo enviar el correo. Revisa el Gmail o intenta más tarde.");
             }
@@ -104,9 +171,32 @@ public class CorreoService {
             throw e;
         } catch (Exception e) {
             if (e instanceof InterruptedException) Thread.currentThread().interrupt();
-            log.error("No se pudo enviar el correo a {} por Apps Script: {}", para, e.getMessage());
+            log.error("[CORREO] No se pudo conectar con el Apps Script para enviar a {}: {} (¿hay internet? ¿la "
+                    + "MAIL_RELAY_URL está bien copiada?)", para, e.toString());
             throw new DatosInvalidosException("No se pudo enviar el correo. Revisa el Gmail o intenta más tarde.");
         }
+    }
+
+    /** Traduce la respuesta del Apps Script a una causa entendible para la consola / logs de Render. */
+    static String causaAppsScript(int status, String body) {
+        String b = body == null ? "" : body;
+        if (b.contains("no autorizado")) {
+            return "el SECRETO del Apps Script no es igual a MAIL_RELAY_SECRET (o cambiaste el SECRETO y no "
+                    + "publicaste una versión nueva: Implementar > Gestionar implementaciones > Editar > Nueva versión)";
+        }
+        if (b.contains("correo inválido")) return "la dirección de destino no es válida";
+        if (b.contains("too many times") || b.contains("demasiadas veces")) {
+            return "se alcanzó el límite diario de correos de Gmail (MailApp); intenta mañana";
+        }
+        if (b.contains("\"ok\":false") || b.contains("\"ok\": false")) {
+            return "el script falló al enviar (¿falta autorizarlo? En el editor ejecuta la función probar() y acepta los permisos)";
+        }
+        if (status == 404) return "la URL no existe: copia otra vez la URL /exec de la implementación activa";
+        if (status == 401 || status == 403 || b.contains("<html") || b.contains("<!DOCTYPE")) {
+            return "el script no es público o pide iniciar sesión: en la implementación pon 'Ejecutar como: Yo' y "
+                    + "'Quién tiene acceso: Cualquier usuario', y usa la URL que termina en /exec";
+        }
+        return "respuesta inesperada del script";
     }
 
     /** Envío por la API HTTPS de Brevo (https://developers.brevo.com/reference/sendtransacemail). */
@@ -127,14 +217,14 @@ public class CorreoService {
                     .build();
             HttpResponse<String> res = http.send(req, HttpResponse.BodyHandlers.ofString());
             if (res.statusCode() / 100 != 2) {
-                log.error("Brevo respondió {} al enviar a {}: {}", res.statusCode(), para, res.body());
+                log.error("[CORREO] Brevo respondió {} al enviar a {}: {}", res.statusCode(), para, res.body());
                 throw new DatosInvalidosException("No se pudo enviar el correo. Revisa el Gmail o intenta más tarde.");
             }
         } catch (DatosInvalidosException e) {
             throw e;
         } catch (Exception e) {
             if (e instanceof InterruptedException) Thread.currentThread().interrupt();
-            log.error("No se pudo enviar el correo a {} por Brevo: {}", para, e.getMessage());
+            log.error("[CORREO] No se pudo enviar el correo a {} por Brevo: {}", para, e.toString());
             throw new DatosInvalidosException("No se pudo enviar el correo. Revisa el Gmail o intenta más tarde.");
         }
     }
@@ -155,6 +245,9 @@ public class CorreoService {
         return b.append('"').toString();
     }
 
+    /**
+     * Devuelve html (como texto).
+     */
     private static String html(String nombre, String codigo, String motivo, int minutos) {
         return """
                 <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;border:1px solid #E3D5C4;border-radius:12px;overflow:hidden">
@@ -171,6 +264,9 @@ public class CorreoService {
                 """.formatted(escapar(nombre), escapar(motivo), codigo, minutos);
     }
 
+    /**
+     * Devuelve escapar (como texto).
+     */
     private static String escapar(String s) {
         return s == null ? "" : s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }

@@ -25,20 +25,35 @@ public class ReporteController {
 
     private final ReporteService reporteService;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public ReporteController(ReporteService reporteService) {
         this.reporteService = reporteService;
     }
 
+    /**
+     * Endpoint GET /api/reportes/filtros — Devuelve filtros. La lógica está en
+     * reporteService.filtros().
+     */
     @GetMapping("/filtros")
     public ReporteDto.Filtros filtros() {
         return reporteService.filtros();
     }
 
+    /**
+     * Endpoint GET /api/reportes/opciones — Devuelve opciones. La lógica está en
+     * reporteService.opciones().
+     */
     @GetMapping("/opciones")
     public ReporteDto.Opciones opciones() {
         return reporteService.opciones();
     }
 
+    /**
+     * Endpoint GET /api/reportes/{tipo} — Genera los reportes académicos y la exportación a Excel. La
+     * lógica está en reporteService.generar().
+     */
     @GetMapping("/{tipo}")
     public ReporteDto.Tabla generar(@PathVariable String tipo,
                                     @RequestParam(required = false) Long periodoId,
@@ -51,6 +66,10 @@ public class ReporteController {
         return reporteService.generar(tipo, periodoId, seccionId, desde, hasta, grado, estudianteId, cursoId);
     }
 
+    /**
+     * Endpoint GET /api/reportes/{tipo}/excel — Devuelve excel como respuesta HTTP. La lógica está en
+     * reporteService.generar().
+     */
     @GetMapping("/{tipo}/excel")
     public ResponseEntity<byte[]> excel(@PathVariable String tipo,
                                         @RequestParam(required = false) Long periodoId,

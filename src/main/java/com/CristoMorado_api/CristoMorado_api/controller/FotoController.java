@@ -26,10 +26,17 @@ public class FotoController {
 
     private final UsuarioRepository usuarioRepository;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public FotoController(UsuarioRepository usuarioRepository) {
         this.usuarioRepository = usuarioRepository;
     }
 
+    /**
+     * Endpoint GET /api/fotos — Devuelve indice (como mapa clave → valor). Solo lee datos (transacción
+     * de solo lectura).
+     */
     @GetMapping
     @Transactional(readOnly = true)
     public Map<Long, String> indice() {
@@ -40,6 +47,10 @@ public class FotoController {
         return indice;
     }
 
+    /**
+     * Endpoint GET /api/fotos/{usuarioId} — Devuelve foto como respuesta HTTP. Solo lee datos
+     * (transacción de solo lectura).
+     */
     @GetMapping("/{usuarioId}")
     @Transactional(readOnly = true)
     public ResponseEntity<byte[]> foto(@PathVariable Long usuarioId) {

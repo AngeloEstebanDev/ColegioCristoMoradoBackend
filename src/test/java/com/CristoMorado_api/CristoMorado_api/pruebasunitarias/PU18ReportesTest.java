@@ -28,6 +28,10 @@ class PU18ReportesTest {
     private SeccionCursoRepository seccionCursoRepository;
     private NotaService notaService;
 
+    /**
+     * Se ejecuta antes de cada prueba: crea los mocks (objetos simulados con Mockito) y los datos de
+     * ejemplo.
+     */
     @BeforeEach
     void setUp() {
         SeccionRepository seccionRepository = mock(SeccionRepository.class);
@@ -60,6 +64,11 @@ class PU18ReportesTest {
         when(notaService.promediosDelCurso(com, bim1)).thenReturn(Map.of(1L, 14.0, 2L, 12.0));
     }
 
+    /**
+     * Caso de prueba: PU-18.1 Filtros válidos (5° Primaria, sección A, I Bimestre): el reporte los
+     * aplica. Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado esperado
+     * (assert).
+     */
     @Test
     @DisplayName("PU-18.1 Filtros válidos (5° Primaria, sección A, I Bimestre): el reporte los aplica")
     void c1_filtrosValidos() {
@@ -75,6 +84,10 @@ class PU18ReportesTest {
         verify(seccionCursoRepository).findBySeccionId(8L);
     }
 
+    /**
+     * Caso de prueba: PU-18.2 Sin registros coincidentes: devuelve un resultado vacío controlado.
+     * Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
+     */
     @Test
     @DisplayName("PU-18.2 Sin registros coincidentes: devuelve un resultado vacío controlado")
     void c2_sinCoincidencias() {
@@ -85,6 +98,10 @@ class PU18ReportesTest {
         assertEquals("0", t.indicadores().get(0).valor());
     }
 
+    /**
+     * Caso de prueba: PU-18.3 Parámetros inválidos (tipo, fechas o sección): se rechaza la solicitud.
+     * Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
+     */
     @Test
     @DisplayName("PU-18.3 Parámetros inválidos (tipo, fechas o sección): se rechaza la solicitud")
     void c3_parametrosInvalidos() {

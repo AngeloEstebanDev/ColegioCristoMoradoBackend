@@ -10,6 +10,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * Servicio del panel de inicio del administrador (estadísticas y actividad reciente). Aquí está la
+ * lógica de negocio: valida los datos, aplica las reglas del colegio y usa los repositorios para leer
+ * o guardar en la base de datos. Los controladores llaman a estos métodos.
+ */
 @Service
 public class DashboardService {
 
@@ -18,6 +23,9 @@ public class DashboardService {
     private final PadreFamiliaRepository padreFamiliaRepository;
     private final ActividadLogService actividadLogService;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public DashboardService(UsuarioRepository usuarioRepository,
                              EstudianteRepository estudianteRepository,
                              PadreFamiliaRepository padreFamiliaRepository,
@@ -28,6 +36,9 @@ public class DashboardService {
         this.actividadLogService = actividadLogService;
     }
 
+    /**
+     * Obtiene stats. Solo lee datos (transacción de solo lectura).
+     */
     @Transactional(readOnly = true)
     public DashboardStats obtenerStats() {
         long usuariosActivos = usuarioRepository.countByEstadoTrue();

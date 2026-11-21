@@ -40,6 +40,9 @@ public class MiHorarioService {
     private final HorarioBloqueRepository bloqueRepository;
     private final AccesoService accesoService;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public MiHorarioService(EstudianteRepository estudianteRepository, SeccionRepository seccionRepository,
                             SeccionCursoRepository seccionCursoRepository, HorarioService horarioService,
                             HorarioBloqueRepository bloqueRepository, AccesoService accesoService) {
@@ -78,6 +81,10 @@ public class MiHorarioService {
                 min == null ? "07:30" : min.toString(), max == null ? "13:15" : max.toString(), bloques);
     }
 
+    /**
+     * Devuelve del alumno. Solo lee datos (transacción de solo lectura). Si el usuario no tiene
+     * permiso para esta acción, responde con error 403.
+     */
     @Transactional(readOnly = true)
     public MiHorarioDto.Respuesta delAlumno(Long usuarioId) {
         if (usuarioId == null) throw new AccesoDenegadoException("Inicia sesión para ver tu horario.");
@@ -94,6 +101,9 @@ public class MiHorarioService {
         return deEstudiante(accesoService.estudianteVisible(usuarioId, estudianteId));
     }
 
+    /**
+     * Devuelve de estudiante.
+     */
     private MiHorarioDto.Respuesta deEstudiante(Estudiante e) {
         if (e.getGrado() == null || e.getSeccion() == null) return vacio(e, null);
 
@@ -124,6 +134,9 @@ public class MiHorarioService {
                 s.getTutor() == null ? null : s.getTutor().getNombreCompleto(), bloques, cursos);
     }
 
+    /**
+     * Devuelve vacio.
+     */
     private static MiHorarioDto.Respuesta vacio(Estudiante e, Turnos.Turno t) {
         return new MiHorarioDto.Respuesta(false, e.getGrado(), e.getSeccion(), t == null ? null : t.nombre(),
                 null, null, null, null, Turnos.MINUTOS_BLOQUE, null, List.of(), List.of());

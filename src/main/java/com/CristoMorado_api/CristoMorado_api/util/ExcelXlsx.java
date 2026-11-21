@@ -23,8 +23,14 @@ public final class ExcelXlsx {
     // Estilos (índices de cellXfs en styles.xml)
     private static final int S_TITULO = 1, S_ENCABEZADO = 2, S_SUBTITULO = 3, S_TEXTO = 4, S_DECIMAL = 5, S_ENTERO = 6;
 
+    /**
+     * Constructor de ExcelXlsx.
+     */
     private ExcelXlsx() {}
 
+    /**
+     * Genera.
+     */
     public static byte[] generar(ReporteDto.Tabla tabla) {
         try {
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -42,6 +48,9 @@ public final class ExcelXlsx {
         }
     }
 
+    /**
+     * Devuelve hoja (como texto).
+     */
     private static String hoja(ReporteDto.Tabla t) {
         List<String> columnas = t.columnas();
         int nCols = Math.max(1, columnas.size());
@@ -140,6 +149,9 @@ public final class ExcelXlsx {
         return sb.toString();
     }
 
+    /**
+     * Devuelve largo.
+     */
     private static int largo(Object v) {
         if (v == null) return 0;
         if (v instanceof Double d) return String.format("%.2f", d).length();
@@ -163,17 +175,26 @@ public final class ExcelXlsx {
         return sb.toString();
     }
 
+    /**
+     * Devuelve nombre hoja (como texto).
+     */
     private static String nombreHoja(String titulo) {
         String n = titulo == null || titulo.isBlank() ? "Reporte" : titulo.replaceAll("[\\[\\]:*?/\\\\]", " ").trim();
         return n.length() > 31 ? n.substring(0, 31).trim() : n;
     }
 
+    /**
+     * Agrega.
+     */
     private static void agregar(ZipOutputStream zip, String nombre, String contenido) throws IOException {
         zip.putNextEntry(new ZipEntry(nombre));
         zip.write(contenido.getBytes(StandardCharsets.UTF_8));
         zip.closeEntry();
     }
 
+    /**
+     * Devuelve workbook (como texto).
+     */
     private static String workbook(String hoja) {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
                 + "<workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" "

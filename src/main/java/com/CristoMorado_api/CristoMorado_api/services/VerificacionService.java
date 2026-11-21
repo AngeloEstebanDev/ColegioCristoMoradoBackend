@@ -41,6 +41,9 @@ public class VerificacionService {
     private final CorreoService correoService;
     private final boolean soloGmail;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public VerificacionService(CodigoVerificacionRepository codigoRepository,
                                UsuarioRepository usuarioRepository,
                                CorreoService correoService,
@@ -55,6 +58,10 @@ public class VerificacionService {
     // 1) Vincular Gmail
     // ------------------------------------------------------------------
 
+    /**
+     * Envía código vinculacion. Se ejecuta en una transacción: si algo falla, no se guarda nada a
+     * medias. Si los datos no son válidos, responde con error 400 y un mensaje claro para el usuario.
+     */
     @Transactional
     public CodigoEnviadoResponse enviarCodigoVinculacion(Long usuarioId, String correo) {
         Usuario u = buscarUsuario(usuarioId);
@@ -82,6 +89,10 @@ public class VerificacionService {
     // 2) Cambiar contraseña (usuario con sesión iniciada)
     // ------------------------------------------------------------------
 
+    /**
+     * Envía código cambio contraseña. Se ejecuta en una transacción: si algo falla, no se guarda nada
+     * a medias.
+     */
     @Transactional
     public CodigoEnviadoResponse enviarCodigoCambioPassword(Long usuarioId) {
         Usuario u = buscarUsuario(usuarioId);
@@ -107,6 +118,10 @@ public class VerificacionService {
     // 3) Recuperar contraseña (desde el login, sin sesión)
     // ------------------------------------------------------------------
 
+    /**
+     * Solicita recuperacion. Se ejecuta en una transacción: si algo falla, no se guarda nada a medias.
+     * Si los datos no son válidos, responde con error 400 y un mensaje claro para el usuario.
+     */
     @Transactional
     public CodigoEnviadoResponse solicitarRecuperacion(String nombreUsuario) {
         Usuario u = buscarPorNombreUsuario(nombreUsuario);
@@ -132,6 +147,10 @@ public class VerificacionService {
     // Utilidades
     // ------------------------------------------------------------------
 
+    /**
+     * Genera y enviar. Si los datos no son válidos, responde con error 400 y un mensaje claro para el
+     * usuario. Guarda los cambios en la base de datos. Envía un correo al Gmail del usuario.
+     */
     private CodigoEnviadoResponse generarYEnviar(Usuario u, String tipo, String correo, String motivo) {
         // No más de un código por minuto (evita spam al correo).
         codigoRepository.findTopByUsuarioIdAndTipoOrderByFechaCreacionDesc(u.getId(), tipo).ifPresent(ultimo -> {
@@ -157,6 +176,10 @@ public class VerificacionService {
         return new CodigoEnviadoResponse(enmascarar(correo), MINUTOS_VALIDEZ, SEGUNDOS_REENVIO);
     }
 
+    /**
+     * Valida código. Si los datos no son válidos, responde con error 400 y un mensaje claro para el
+     * usuario. Guarda los cambios en la base de datos.
+     */
     private CodigoVerificacion validarCodigo(Long usuarioId, String tipo, String codigo) {
         String limpio = codigo == null ? "" : codigo.replaceAll("\\s", "");
         if (!limpio.matches("\\d{6}")) {
@@ -186,6 +209,10 @@ public class VerificacionService {
         return codigoRepository.save(c);
     }
 
+    /**
+     * Valida correo. Si los datos no son válidos, responde con error 400 y un mensaje claro para el
+     * usuario.
+     */
     private String validarCorreo(String correo) {
         String c = correo == null ? "" : correo.trim().toLowerCase();
         if (!c.matches("[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}")) {
@@ -197,6 +224,10 @@ public class VerificacionService {
         return c;
     }
 
+    /**
+     * Verifica que no lo use otro. Si el dato ya existe (por ejemplo, un DNI o usuario repetido),
+     * responde con error 409.
+     */
     private void verificarQueNoLoUseOtro(String correo, Long usuarioId) {
         usuarioRepository.findByCorreoIgnoreCase(correo).ifPresent(otro -> {
             if (!otro.getId().equals(usuarioId)) {
@@ -205,6 +236,10 @@ public class VerificacionService {
         });
     }
 
+    /**
+     * Comprueba que se cumpla gmail verificado. Si los datos no son válidos, responde con error 400 y
+     * un mensaje claro para el usuario.
+     */
     private static void exigirGmailVerificado(Usuario u, String mensaje) {
         if (u.getCorreo() == null || !Boolean.TRUE.equals(u.getCorreoVerificado())) {
             throw new DatosInvalidosException(mensaje);
@@ -222,6 +257,9 @@ public class VerificacionService {
                 + correo.substring(arroba);
     }
 
+    /**
+     * Devuelve hash (como texto).
+     */
     private static String hash(String codigo, Long usuarioId) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
@@ -231,12 +269,20 @@ public class VerificacionService {
         }
     }
 
+    /**
+     * Busca usuario. Si no encuentra el registro, responde con error 404. Si los datos no son válidos,
+     * responde con error 400 y un mensaje claro para el usuario.
+     */
     private Usuario buscarUsuario(Long id) {
         if (id == null) throw new DatosInvalidosException("Falta el usuario.");
         return usuarioRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado."));
     }
 
+    /**
+     * Busca por nombre usuario. Si no encuentra el registro, responde con error 404. Si los datos no
+     * son válidos, responde con error 400 y un mensaje claro para el usuario.
+     */
     private Usuario buscarPorNombreUsuario(String usuario) {
         String u = usuario == null ? "" : usuario.trim();
         if (u.isEmpty()) throw new DatosInvalidosException("Escribe tu usuario.");

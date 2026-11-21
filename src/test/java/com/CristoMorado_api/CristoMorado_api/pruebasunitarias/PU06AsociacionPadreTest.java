@@ -26,6 +26,10 @@ class PU06AsociacionPadreTest {
     private EstudianteFamiliarRepository vinculoRepository;
     private VinculoService servicio;
 
+    /**
+     * Se ejecuta antes de cada prueba: crea los mocks (objetos simulados con Mockito) y los datos de
+     * ejemplo. Guarda los cambios en la base de datos.
+     */
     @BeforeEach
     void setUp() {
         vinculoRepository = mock(EstudianteFamiliarRepository.class);
@@ -39,6 +43,11 @@ class PU06AsociacionPadreTest {
         when(vinculoRepository.save(any(EstudianteFamiliar.class))).thenAnswer(inv -> inv.getArgument(0));
     }
 
+    /**
+     * Caso de prueba: PU-06.1 Padre y estudiante existentes: la asociación es válida. Prepara los
+     * datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert). Guarda los
+     * cambios en la base de datos.
+     */
     @Test
     @DisplayName("PU-06.1 Padre y estudiante existentes: la asociación es válida")
     void c1_asociacionValida() {
@@ -48,6 +57,11 @@ class PU06AsociacionPadreTest {
         verify(vinculoRepository, times(1)).save(any(EstudianteFamiliar.class));
     }
 
+    /**
+     * Caso de prueba: PU-06.2 Identificador de padre inexistente: se rechaza la operación. Prepara los
+     * datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert). Guarda los
+     * cambios en la base de datos.
+     */
     @Test
     @DisplayName("PU-06.2 Identificador de padre inexistente: se rechaza la operación")
     void c2_padreInexistente() {
@@ -58,6 +72,11 @@ class PU06AsociacionPadreTest {
         verify(vinculoRepository, never()).save(any(EstudianteFamiliar.class));
     }
 
+    /**
+     * Caso de prueba: PU-06.3 Identificador de estudiante inexistente: se rechaza la operación.
+     * Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
+     * Guarda los cambios en la base de datos.
+     */
     @Test
     @DisplayName("PU-06.3 Identificador de estudiante inexistente: se rechaza la operación")
     void c3_estudianteInexistente() {

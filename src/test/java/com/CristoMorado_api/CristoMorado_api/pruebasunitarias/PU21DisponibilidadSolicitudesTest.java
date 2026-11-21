@@ -44,6 +44,9 @@ class PU21DisponibilidadSolicitudesTest {
         disponibilidadRepository = mock(DisponibilidadRepository.class);
         mensajeService = mock(MensajeService.class);
         AccesoService acceso = new AccesoService(usuarioRepository, mock(DocenteRepository.class), mock(EstudianteRepository.class),
+                /**
+                 * Crea un objeto simulado (mock) con Mockito para usarlo en la prueba.
+                 */
                 padreRepository, mock(SeccionRepository.class), mock(SeccionCursoRepository.class));
         servicio = new AgendaService(disponibilidadRepository, citaRepository, usuarioRepository, padreRepository,
                 mock(EstudianteRepository.class), mock(PersonalRepository.class), mock(SeccionCursoRepository.class),
@@ -69,6 +72,9 @@ class PU21DisponibilidadSolicitudesTest {
         when(disponibilidadRepository.findByUsuarioIdAndActivoTrue(ADMIN)).thenReturn(horario);
     }
 
+    /**
+     * Devuelve cita.
+     */
     private Cita cita(Long id, LocalDate fecha, int hora, int minuto, String estado) {
         LocalTime ini = LocalTime.of(hora, minuto);
         return Cita.builder().id(id).responsable(admin).padre(uPadre).fecha(fecha).horaInicio(ini).horaFin(ini.plusMinutes(30))
@@ -76,10 +82,17 @@ class PU21DisponibilidadSolicitudesTest {
                 .reprogramaciones(0).build();
     }
 
+    /**
+     * Indica si tiene lo indicado (devuelve verdadero o falso).
+     */
     private static boolean tiene(List<CitaDto.Horario> libres, LocalDate fecha, String hora) {
         return libres.stream().anyMatch(h -> h.fecha().equals(fecha) && h.horaInicio().equals(hora));
     }
 
+    /**
+     * Caso de prueba: PU-21.1 Horario libre: se identifica como disponible. Prepara los datos
+     * (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
+     */
     @Test
     @DisplayName("PU-21.1 Horario libre: se identifica como disponible")
     void c1_horarioLibreDisponible() {
@@ -90,6 +103,10 @@ class PU21DisponibilidadSolicitudesTest {
         assertTrue(tiene(libres, fecha, "15:30"), "15:30 debe estar disponible");
     }
 
+    /**
+     * Caso de prueba: PU-21.2 Horario ya reservado: se identifica como no disponible. Prepara los
+     * datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
+     */
     @Test
     @DisplayName("PU-21.2 Horario ya reservado: se identifica como no disponible")
     void c2_horarioReservadoNoDisponible() {
@@ -103,6 +120,11 @@ class PU21DisponibilidadSolicitudesTest {
         assertTrue(tiene(libres, fecha, "15:30"), "15:30 sigue libre");
     }
 
+    /**
+     * Caso de prueba: PU-21.3 Solicitud de reunión incompleta: se rechaza. Prepara los datos
+     * (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert). Guarda los
+     * cambios en la base de datos.
+     */
     @Test
     @DisplayName("PU-21.3 Solicitud de reunión incompleta: se rechaza")
     void c3_solicitudIncompleta() {

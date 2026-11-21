@@ -14,6 +14,9 @@ public class MiHorarioController {
     private final MiHorarioService miHorarioService;
     private final UsuarioRepository usuarioRepository;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public MiHorarioController(MiHorarioService miHorarioService, UsuarioRepository usuarioRepository) {
         this.miHorarioService = miHorarioService;
         this.usuarioRepository = usuarioRepository;
@@ -33,6 +36,11 @@ public class MiHorarioController {
         return miHorarioService.delHijo(usuarioId, estudianteId);
     }
 
+    /**
+     * Endpoint GET /api/mi-horario — Obtiene el horario de clases de quien inició sesión. La lógica
+     * está en miHorarioService.delAlumno(). Sabe quién hace la petición por la cabecera X-Usuario-Id
+     * que envía el frontend.
+     */
     @GetMapping
     public MiHorarioDto.Respuesta obtener(@RequestHeader(value = "X-Usuario-Id", required = false) Long usuarioId) {
         return miHorarioService.delAlumno(usuarioId);

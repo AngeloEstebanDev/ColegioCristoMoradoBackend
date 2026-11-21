@@ -27,6 +27,9 @@ public class PeriodoService {
 
     private final PeriodoRepository periodoRepository;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public PeriodoService(PeriodoRepository periodoRepository) {
         this.periodoRepository = periodoRepository;
     }
@@ -41,6 +44,10 @@ public class PeriodoService {
                 .toList();
     }
 
+    /**
+     * Crea un nuevo registro (el periodo) con los datos recibidos. Se ejecuta en una transacción: si
+     * algo falla, no se guarda nada a medias. Guarda los cambios en la base de datos.
+     */
     @Transactional
     public PeriodoDto.Response crear(PeriodoDto.Request req) {
         Periodo p = Periodo.builder().build();

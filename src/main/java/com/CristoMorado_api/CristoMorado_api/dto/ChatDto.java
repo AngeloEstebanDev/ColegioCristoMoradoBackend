@@ -10,6 +10,9 @@ import java.util.List;
  */
 public final class ChatDto {
 
+    /**
+     * Constructor de ChatDto.
+     */
     private ChatDto() {}
 
     public static final long AVISOS = 0L;
@@ -39,7 +42,14 @@ public final class ChatDto {
             Boolean aviso
     ) {}
 
+    /**
+     * Estructura de datos Chat (record): agrupa chat en un solo objeto inmutable que viaja como JSON.
+     */
     public record Chat(Conversacion conversacion, List<MensajeChat> mensajes) {}
 
+    /**
+     * Estructura de datos EnviarRequest (record): agrupa enviar request en un solo objeto inmutable
+     * que viaja como JSON.
+     */
     public record EnviarRequest(String contenido) {}
 }

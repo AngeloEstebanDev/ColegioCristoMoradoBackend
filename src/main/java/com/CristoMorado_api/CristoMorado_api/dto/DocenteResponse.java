@@ -6,6 +6,11 @@ import com.CristoMorado_api.CristoMorado_api.entity.Usuario;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+/**
+ * DTO de salida DocenteResponse: datos que el backend devuelve al frontend (en JSON) sobre los
+ * docentes. Se arma a partir de la entidad para enviar solo lo necesario (por ejemplo, nunca la
+ * contraseña).
+ */
 public record DocenteResponse(
         Long id,
         String nombreCompleto,
@@ -30,6 +35,9 @@ public record DocenteResponse(
         Boolean correoVerificado,
         Boolean cuentaActiva
 ) {
+    /**
+     * Convierte la entidad en este DTO, copiando solo los datos que necesita el frontend.
+     */
     public static DocenteResponse fromEntity(Docente d, Usuario cuenta) {
         return new DocenteResponse(
                 d.getId(), d.getNombreCompleto(), d.getTipoDocumento(), d.getDni(), d.getFotoUrl(),

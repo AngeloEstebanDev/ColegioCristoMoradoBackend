@@ -26,6 +26,9 @@ public final class Campos {
     public static final int DIRECCION_MAX = 200;
     public static final int CORREO_MAX = 150;
 
+    /**
+     * Constructor de Campos.
+     */
     private Campos() {}
 
     /** Quita espacios al inicio y al final y deja un solo espacio entre palabras. Vacío -> null. */
@@ -105,6 +108,9 @@ public final class Campos {
         String v = limpio(valor);
         if (v == null) return null;
         for (String p : permitidos) if (p.equalsIgnoreCase(v)) return p;
+        /**
+         * Devuelve datos invalidos exception.
+         */
         throw new DatosInvalidosException(mayuscula(etiqueta) + " no es válido. Usa: " + String.join(", ", permitidos) + ".");
     }
 
@@ -146,6 +152,9 @@ public final class Campos {
         return password;
     }
 
+    /**
+     * Devuelve mayuscula (como texto).
+     */
     private static String mayuscula(String s) {
         return s.isEmpty() ? s : Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }

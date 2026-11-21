@@ -35,6 +35,9 @@ public class UsuarioService {
     private final CuentaService cuentaService;
     private final PersonalRepository personalRepository;
 
+    /**
+     * Constructor: Spring entrega (inyecta) automáticamente las dependencias que usa esta clase.
+     */
     public UsuarioService(UsuarioRepository usuarioRepository,
                           EstudianteRepository estudianteRepository,
                           DocenteRepository docenteRepository,
@@ -51,6 +54,10 @@ public class UsuarioService {
         this.cuentaService = cuentaService;
     }
 
+    /**
+     * Devuelve la lista de las cuentas de usuario, roles y permisos. Solo lee datos (transacción de
+     * solo lectura).
+     */
     @Transactional(readOnly = true)
     public List<UsuarioResponse> listar() {
         return usuarioRepository.findAll().stream()
@@ -58,12 +65,21 @@ public class UsuarioService {
                 .toList();
     }
 
+    /**
+     * Obtiene la cuenta de usuario indicado por su id. Solo lee datos (transacción de solo lectura).
+     */
     @Transactional(readOnly = true)
     public UsuarioResponse obtener(Long id) {
         Usuario u = buscarOFallar(id);
         return UsuarioResponse.fromEntity(u, vinculadoA(id));
     }
 
+    /**
+     * Crea un nuevo registro (la cuenta de usuario) con los datos recibidos. Se ejecuta en una
+     * transacción: si algo falla, no se guarda nada a medias. Si los datos no son válidos, responde
+     * con error 400 y un mensaje claro para el usuario. Si el dato ya existe (por ejemplo, un DNI o
+     * usuario repetido), responde con error 409. Guarda los cambios en la base de datos.
+     */
     @Transactional
     public UsuarioResponse crear(UsuarioRequest req, Long actorId) {
         String rol = rolObligatorio(req.rol());
@@ -90,6 +106,12 @@ public class UsuarioService {
         return UsuarioResponse.fromEntity(usuarioRepository.save(u));
     }
 
+    /**
+     * Actualiza los datos de la cuenta de usuario indicado por su id. Se ejecuta en una transacción:
+     * si algo falla, no se guarda nada a medias. Si los datos no son válidos, responde con error 400 y
+     * un mensaje claro para el usuario. Si el dato ya existe (por ejemplo, un DNI o usuario repetido),
+     * responde con error 409. Guarda los cambios en la base de datos.
+     */
     @Transactional
     public UsuarioResponse actualizar(Long id, UsuarioRequest req, Long actorId) {
         noEsSuPropiaCuenta(id, actorId, "editar");
@@ -126,6 +148,10 @@ public class UsuarioService {
         return UsuarioResponse.fromEntity(usuarioRepository.save(u), vinculado);
     }
 
+    /**
+     * Cambia estado. Se ejecuta en una transacción: si algo falla, no se guarda nada a medias. Guarda
+     * los cambios en la base de datos.
+     */
     @Transactional
     public UsuarioResponse cambiarEstado(Long id, boolean estado, Long actorId) {
         noEsSuPropiaCuenta(id, actorId, "desactivar");
@@ -136,6 +162,11 @@ public class UsuarioService {
         return UsuarioResponse.fromEntity(usuarioRepository.save(u), vinculadoA(id));
     }
 
+    /**
+     * Elimina la cuenta de usuario indicado por su id. Se ejecuta en una transacción: si algo falla,
+     * no se guarda nada a medias. Si los datos no son válidos, responde con error 400 y un mensaje
+     * claro para el usuario. Borra registros de la base de datos.
+     */
     @Transactional
     public void eliminar(Long id, Long actorId) {
         noEsSuPropiaCuenta(id, actorId, "eliminar");
@@ -151,10 +182,16 @@ public class UsuarioService {
         usuarioRepository.deleteById(id);
     }
 
+    /**
+     * Cuenta activos.
+     */
     long contarActivos() {
         return usuarioRepository.countByEstadoTrue();
     }
 
+    /**
+     * Cuenta por rol.
+     */
     long contarPorRol(String rol) {
         return usuarioRepository.countByRolIgnoreCase(rol);
     }
@@ -195,6 +232,10 @@ public class UsuarioService {
         return null;
     }
 
+    /**
+     * Devuelve nombre de usuario (como texto). Si los datos no son válidos, responde con error 400 y
+     * un mensaje claro para el usuario.
+     */
     private String nombreDeUsuario(String rol, UsuarioRequest req) {
         if (UsuarioFormato.DIRECTIVA.equals(UsuarioFormato.prefijoDeRol(rol))) {
             return cuentaService.usuarioPara(UsuarioFormato.DIRECTIVA, req.dni());
@@ -206,6 +247,10 @@ public class UsuarioService {
         return usuario;
     }
 
+    /**
+     * Rechaza roles de modulo. Si los datos no son válidos, responde con error 400 y un mensaje claro
+     * para el usuario.
+     */
     private static void rechazarRolesDeModulo(String rol) {
         String prefijo = UsuarioFormato.prefijoDeRol(rol);
         if (UsuarioFormato.ALUMNO.equals(prefijo) || UsuarioFormato.DOCENTE.equals(prefijo)
@@ -230,16 +275,27 @@ public class UsuarioService {
         }
     }
 
+    /**
+     * Devuelve misma categoría (verdadero o falso).
+     */
     private static boolean mismaCategoria(String a, String b) {
         String pa = UsuarioFormato.prefijoDeRol(a), pb = UsuarioFormato.prefijoDeRol(b);
         return pa == null ? a.equalsIgnoreCase(b) : pa.equals(pb);
     }
 
+    /**
+     * Devuelve rol obligatorio (como texto). Si los datos no son válidos, responde con error 400 y un
+     * mensaje claro para el usuario.
+     */
     private static String rolObligatorio(String rol) {
         if (rol == null || rol.isBlank()) throw new DatosInvalidosException("Selecciona un rol.");
         return rol.trim();
     }
 
+    /**
+     * Devuelve nombre obligatorio (como texto). Si los datos no son válidos, responde con error 400 y
+     * un mensaje claro para el usuario.
+     */
     private static String nombreObligatorio(String nombre) {
         if (nombre == null || nombre.trim().length() < 3) {
             throw new DatosInvalidosException("Escribe el nombre completo.");
@@ -247,6 +303,10 @@ public class UsuarioService {
         return com.CristoMorado_api.CristoMorado_api.util.Campos.parteNombre(nombre, "el nombre", 100, true);
     }
 
+    /**
+     * Busca el registro por su id; si no existe, lanza RecursoNoEncontradoException (error 404). Si no
+     * encuentra el registro, responde con error 404.
+     */
     private Usuario buscarOFallar(Long id) {
         return usuarioRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado."));

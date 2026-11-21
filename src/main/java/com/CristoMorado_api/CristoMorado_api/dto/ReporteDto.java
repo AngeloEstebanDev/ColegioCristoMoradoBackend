@@ -8,16 +8,31 @@ import java.util.List;
  */
 public final class ReporteDto {
 
+    /**
+     * Constructor de ReporteDto.
+     */
     private ReporteDto() {}
 
+    /**
+     * Estructura de datos Indicador (record): agrupa indicador en un solo objeto inmutable que viaja
+     * como JSON.
+     */
     public record Indicador(String etiqueta, String valor, String detalle) {}
 
     /** filas: cada celda es texto o número. */
     public record Tabla(String tipo, String titulo, String subtitulo, List<String> columnas,
                         List<List<Object>> filas, List<Indicador> indicadores) {}
 
+    /**
+     * Estructura de datos Opcion (record): agrupa opción en un solo objeto inmutable que viaja como
+     * JSON.
+     */
     public record Opcion(Long id, String nombre) {}
 
+    /**
+     * Estructura de datos Filtros (record): agrupa filtros en un solo objeto inmutable que viaja como
+     * JSON.
+     */
     public record Filtros(List<Opcion> periodos, Long periodoActivo, List<Opcion> secciones) {}
 
     /** Sección con su grado y letra (para filtrar secciones por grado). */

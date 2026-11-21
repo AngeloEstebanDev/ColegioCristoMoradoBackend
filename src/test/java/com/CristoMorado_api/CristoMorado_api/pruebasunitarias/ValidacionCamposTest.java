@@ -11,16 +11,23 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Pruebas complementarias de las reglas de validación de campos (util/Campos),
+ * Pruebas complementarias de las reglas de validación de campos (útil/Campos),
  * que usan los formularios de alumnos, padres, docentes, directiva y perfil.
  */
 @DisplayName("VC – Reglas de validación de campos")
 class ValidacionCamposTest {
 
+    /**
+     * Devuelve error (como texto).
+     */
     private static String error(Runnable r) {
         return assertThrows(DatosInvalidosException.class, r::run).getMessage();
     }
 
+    /**
+     * Caso de prueba: VC-01 Teléfono: solo 9 dígitos que empiezan con 9. Prepara los datos (arrange),
+     * ejecuta el método (act) y comprueba el resultado esperado (assert).
+     */
     @Test
     @DisplayName("VC-01 Teléfono: solo 9 dígitos que empiezan con 9")
     void c1_telefono() {
@@ -34,6 +41,10 @@ class ValidacionCamposTest {
         assertEquals("El teléfono debe empezar con 9 (celular).", error(() -> Campos.telefono("187654321", false)));
     }
 
+    /**
+     * Caso de prueba: VC-02 Nombre completo: solo letras, nombre y apellido, 5 a 100 caracteres.
+     * Prepara los datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
+     */
     @Test
     @DisplayName("VC-02 Nombre completo: solo letras, nombre y apellido, 5 a 100 caracteres")
     void c2_nombreCompleto() {
@@ -45,6 +56,10 @@ class ValidacionCamposTest {
         assertTrue(error(() -> Campos.nombreCompleto("Ana " + "B".repeat(100), "vacío")).startsWith("El nombre debe tener entre 5 y 100"));
     }
 
+    /**
+     * Caso de prueba: VC-03 Correo: formato usuario@dominio.ext y hasta 150 caracteres. Prepara los
+     * datos (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
+     */
     @Test
     @DisplayName("VC-03 Correo: formato usuario@dominio.ext y hasta 150 caracteres")
     void c3_correo() {
@@ -55,6 +70,10 @@ class ValidacionCamposTest {
         assertTrue(error(() -> Campos.correo("a".repeat(150) + "@x.com", "El correo")).contains("150"));
     }
 
+    /**
+     * Caso de prueba: VC-04 Fecha de nacimiento: no futura y con edad válida. Prepara los datos
+     * (arrange), ejecuta el método (act) y comprueba el resultado esperado (assert).
+     */
     @Test
     @DisplayName("VC-04 Fecha de nacimiento: no futura y con edad válida")
     void c4_fechaNacimiento() {
@@ -65,6 +84,10 @@ class ValidacionCamposTest {
         assertTrue(error(() -> Campos.fechaNacimiento(hoy.minusYears(15), 18, 100)).contains("entre 18 y 100"));
     }
 
+    /**
+     * Caso de prueba: VC-05 Textos, opciones, números y contraseña. Prepara los datos (arrange),
+     * ejecuta el método (act) y comprueba el resultado esperado (assert).
+     */
     @Test
     @DisplayName("VC-05 Textos, opciones, números y contraseña")
     void c5_otros() {
